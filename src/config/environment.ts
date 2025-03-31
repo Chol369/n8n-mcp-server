@@ -7,7 +7,7 @@
 
 import dotenv from 'dotenv';
 import { McpError } from '@modelcontextprotocol/sdk/types.js';
-import { ErrorCode } from '../errors/error-codes.js';
+import { ErrorCode } from '../errors/error-codes.js'; // Already has .js
 
 // Environment variable names
 export const ENV_VARS = {

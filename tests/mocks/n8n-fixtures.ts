@@ -21,6 +21,7 @@ export const createMockWorkflow = (overrides: Partial<Workflow> = {}): Workflow 
         id: 'start',
         name: 'Start',
         type: 'n8n-nodes-base.start',
+        typeVersion: 1, // Added missing property
         parameters: {},
         position: [100, 300],
       },

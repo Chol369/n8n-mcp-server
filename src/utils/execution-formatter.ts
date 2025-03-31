@@ -5,7 +5,7 @@
  * in a consistent, user-friendly manner.
  */
 
-import { Execution } from '../types/index.js';
+import { Execution, ExecutionRunData, ExecutionError } from '../types/index.js'; // Import specific types
 
 /**
  * Format basic execution information for display
@@ -13,10 +13,11 @@ import { Execution } from '../types/index.js';
  * @param execution Execution object
  * @returns Formatted execution summary
  */
-export function formatExecutionSummary(execution: Execution): Record<string, any> {
+export function formatExecutionSummary(execution: Execution): Record<string, any> { // Keep return flexible for now
   // Calculate duration
   const startedAt = new Date(execution.startedAt);
-  const stoppedAt = execution.stoppedAt ? new Date(execution.stoppedAt) : new Date();
+  // Use current time if stoppedAt is null (execution still running)
+  const stoppedAt = execution.stoppedAt ? new Date(execution.stoppedAt) : new Date(); 
   const durationMs = stoppedAt.getTime() - startedAt.getTime();
   const durationSeconds = Math.round(durationMs / 1000);
   
@@ -40,49 +41,56 @@ export function formatExecutionSummary(execution: Execution): Record<string, any
  * @param execution Execution object
  * @returns Formatted execution details
  */
-export function formatExecutionDetails(execution: Execution): Record<string, any> {
+export function formatExecutionDetails(execution: Execution): Record<string, any> { // Keep return flexible
   const summary = formatExecutionSummary(execution);
   
   // Extract node results
   const nodeResults: Record<string, any> = {};
-  if (execution.data?.resultData?.runData) {
-    for (const [nodeName, nodeData] of Object.entries(execution.data.resultData.runData)) {
+  const runData: ExecutionRunData | undefined = execution.data?.resultData?.runData;
+
+  if (runData) {
+    for (const [nodeName, nodeDataArray] of Object.entries(runData)) {
       try {
-        // Get the last output
-        const lastOutput = Array.isArray(nodeData) && nodeData.length > 0
-          ? nodeData[nodeData.length - 1]
+        // Get the last output object from the node's execution history array
+        const lastOutput = Array.isArray(nodeDataArray) && nodeDataArray.length > 0
+          ? nodeDataArray[nodeDataArray.length - 1]
           : null;
           
+        // Check if the last output has the expected structure
         if (lastOutput && lastOutput.data && Array.isArray(lastOutput.data.main)) {
-          // Extract the output data
-          const outputData = lastOutput.data.main.length > 0 
-            ? lastOutput.data.main[0]
+          // Extract the output data items
+          const outputItems = lastOutput.data.main.length > 0 
+            ? lastOutput.data.main[0] // Assuming the first element contains the items array
             : [];
             
           nodeResults[nodeName] = {
             status: lastOutput.status,
-            items: outputData.length,
-            data: outputData.slice(0, 3), // Limit to first 3 items to avoid overwhelming response
+            items: Array.isArray(outputItems) ? outputItems.length : 0, // Ensure items is an array
+            // Limit data preview to avoid overwhelming response
+            dataPreview: Array.isArray(outputItems) ? outputItems.slice(0, 3) : [], 
           };
+        } else {
+           nodeResults[nodeName] = { status: lastOutput?.status || 'unknown', items: 0, dataPreview: [] };
         }
       } catch (error) {
+        console.error(`Error parsing node output for ${nodeName}:`, error);
         nodeResults[nodeName] = { error: 'Failed to parse node output' };
       }
     }
   }
   
+  // Extract error details if present
+  const errorDetails: ExecutionError | undefined = execution.data?.resultData?.error;
+
   // Add node results and error information to the summary
   return {
     ...summary,
     mode: execution.mode,
     nodeResults: nodeResults,
-    // Include error information if present
-    error: execution.data?.resultData && 'error' in execution.data.resultData
-      ? {
-          message: (execution.data.resultData as any).error?.message,
-          stack: (execution.data.resultData as any).error?.stack,
-        }
-      : undefined,
+    error: errorDetails ? { // Use the defined ExecutionError type
+      message: errorDetails.message,
+      stack: errorDetails.stack, // Include stack if available
+    } : undefined,
   };
 }
 
@@ -92,7 +100,7 @@ export function formatExecutionDetails(execution: Execution): Record<string, any
  * @param status Execution status string
  * @returns Status indicator emoji
  */
-export function getStatusIndicator(status: string): string {
+export function getStatusIndicator(status: Execution['status']): string { // Use specific status type
   switch (status) {
     case 'success':
       return '✅'; // Success
@@ -100,10 +108,11 @@ export function getStatusIndicator(status: string): string {
       return '❌'; // Error
     case 'waiting':
       return '⏳'; // Waiting
-    case 'canceled':
-      return '🛑'; // Canceled
+    // Add other potential statuses if known, e.g., 'canceled'
+    // case 'canceled': 
+    //   return '🛑'; 
     default:
-      return '⏱️'; // In progress or unknown
+      return '⏱️'; // Running or unknown
   }
 }
 
@@ -114,7 +123,7 @@ export function getStatusIndicator(status: string): string {
  * @param limit Maximum number of executions to include
  * @returns Summary of execution results
  */
-export function summarizeExecutions(executions: Execution[], limit: number = 10): Record<string, any> {
+export function summarizeExecutions(executions: Execution[], limit: number = 10): Record<string, any> { // Keep return flexible
   const limitedExecutions = executions.slice(0, limit);
   
   // Group executions by status
@@ -132,7 +141,7 @@ export function summarizeExecutions(executions: Execution[], limit: number = 10)
   return {
     total: totalCount,
     byStatus: Object.entries(byStatus).map(([status, count]) => ({
-      status: `${getStatusIndicator(status)} ${status}`,
+      status: `${getStatusIndicator(status as Execution['status'])} ${status}`, // Cast status
       count,
       percentage: totalCount > 0 ? Math.round((count / totalCount) * 100) : 0
     })),

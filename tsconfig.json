@@ -11,10 +11,9 @@
     "resolveJsonModule": true,
     "skipLibCheck": true,
     "forceConsistentCasingInFileNames": true,
-    "rootDir": "src",
+    "rootDir": ".", // Set rootDir to encompass both src and tests
     "lib": [
-      "ES2020",
-      "DOM"
+      "ES2020" // Removed "DOM" as it's likely unused in a Node.js server
     ],
     "types": [
       "node"
@@ -28,4 +27,5 @@
     "build",
     "**/*.test.ts"
   ]
+  // Remove project reference
 }

@@ -14,12 +14,17 @@ export class ListWorkflowsHandler extends BaseWorkflowToolHandler {
   /**
    * Execute the tool
    * 
-   * @param args Tool arguments
-   * @returns List of workflows
-   */
-  async execute(args: Record<string, any>): Promise<ToolCallResult> {
-    return this.handleExecution(async () => {
-      const workflows = await this.apiService.getWorkflows();
+ * @param args Tool arguments (expecting optional 'active' boolean)
+ * @returns List of workflows
+ */
+  async execute(args: { active?: boolean }): Promise<ToolCallResult> { // Use specific type for args
+    return this.handleExecution(async (args) => { // Pass args to the handler
+      let workflows: Workflow[] = await this.apiService.getWorkflows(); // Add type annotation
+
+      // Apply filtering if the 'active' argument is provided
+      if (args && typeof args.active === 'boolean') {
+        workflows = workflows.filter((workflow: Workflow) => workflow.active === args.active);
+      }
       
       // Format the workflows for display
       const formattedWorkflows = workflows.map((workflow: Workflow) => ({
@@ -31,9 +36,9 @@ export class ListWorkflowsHandler extends BaseWorkflowToolHandler {
       
       return this.formatSuccess(
         formattedWorkflows,
-        `Found ${formattedWorkflows.length} workflow(s)`
+        `Found ${formattedWorkflows.length} workflow(s)` + (typeof args?.active === 'boolean' ? ` (filtered by active=${args.active})` : '')
       );
-    }, args);
+    }, args); // Pass args to handleExecution
   }
 }
 

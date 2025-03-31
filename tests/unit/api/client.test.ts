@@ -2,33 +2,40 @@
  * N8nApiClient unit tests
  */
 
-import '@jest/globals';
-import axios from 'axios';
-import { N8nApiClient } from '../../../src/api/client.js';
-import { EnvConfig } from '../../../src/config/environment.js';
-import { N8nApiError } from '../../../src/errors/index.js';
-import { createMockAxiosInstance, createMockAxiosResponse } from '../../mocks/axios-mock.js';
-import { mockApiResponses } from '../../mocks/n8n-fixtures.js';
+import { describe, it, expect, jest, beforeEach, afterEach } from '@jest/globals'; // Explicit import
+import axios, { AxiosInstance } from 'axios'; // Import AxiosInstance type
+import { N8nApiClient } from '../../../src/api/client.js'; // Add .js
+import { EnvConfig } from '../../../src/config/environment.js'; // Add .js
+import { N8nApiError } from '../../../src/errors/index.js'; // Add .js
+import { createMockAxiosInstance, createMockAxiosResponse } from '../../mocks/axios-mock.js'; // Add .js
+import { mockApiResponses } from '../../mocks/n8n-fixtures.js'; // Add .js
 
-// Mock axios
-jest.mock('axios', () => ({
-  create: jest.fn(),
-}));
+// We will spy on axios.create instead of mocking the whole module
+// jest.mock('axios'); 
+// const mockedAxios = axios as jest.Mocked<typeof axios>;
+
 
 describe('N8nApiClient', () => {
   // Mock configuration
   const mockConfig: EnvConfig = {
     n8nApiUrl: 'https://n8n.example.com/api/v1',
     n8nApiKey: 'test-api-key',
+    n8nWebhookUsername: 'test-user', // Added missing property
+    n8nWebhookPassword: 'test-password', // Added missing property
     debug: false,
   };
   
+  // Define a type for the mock axios instance based on axios-mock.ts
+  type MockAxiosInstance = ReturnType<typeof createMockAxiosInstance>;
+  
   // Mock axios instance
-  let mockAxios;
+  let mockAxios: MockAxiosInstance;
   
   beforeEach(() => {
+    // Create the mock instance
     mockAxios = createMockAxiosInstance();
-    (axios.create as jest.Mock).mockReturnValue(mockAxios);
+    // Spy on axios.create and mock its return value
+    jest.spyOn(axios, 'create').mockReturnValue(mockAxios as any); 
   });
   
   afterEach(() => {
@@ -42,7 +49,7 @@ describe('N8nApiClient', () => {
       new N8nApiClient(mockConfig);
       
       // Assert
-      expect(axios.create).toHaveBeenCalledWith({
+      expect(axios.create).toHaveBeenCalledWith({ // Check the spy
         baseURL: mockConfig.n8nApiUrl,
         headers: {
           'X-N8N-API-KEY': mockConfig.n8nApiKey,
@@ -80,6 +87,7 @@ describe('N8nApiClient', () => {
       const client = new N8nApiClient(mockConfig);
       mockAxios.addMockResponse('get', '/workflows', {
         status: 200,
+        statusText: 'OK', // Added statusText
         data: { data: [] },
       });
       
@@ -92,6 +100,7 @@ describe('N8nApiClient', () => {
       const client = new N8nApiClient(mockConfig);
       mockAxios.addMockResponse('get', '/workflows', {
         status: 500,
+        statusText: 'Internal Server Error', // Added statusText
         data: { message: 'Server error' },
       });
       
@@ -116,6 +125,7 @@ describe('N8nApiClient', () => {
       const mockWorkflows = mockApiResponses.workflows.list;
       mockAxios.addMockResponse('get', '/workflows', {
         status: 200,
+        statusText: 'OK', // Added statusText
         data: mockWorkflows,
       });
       
@@ -132,6 +142,7 @@ describe('N8nApiClient', () => {
       const client = new N8nApiClient(mockConfig);
       mockAxios.addMockResponse('get', '/workflows', {
         status: 200,
+        statusText: 'OK', // Added statusText
         data: {},
       });
       
@@ -160,6 +171,7 @@ describe('N8nApiClient', () => {
       const mockWorkflow = mockApiResponses.workflows.single(workflowId);
       mockAxios.addMockResponse('get', `/workflows/${workflowId}`, {
         status: 200,
+        statusText: 'OK', // Added statusText
         data: mockWorkflow,
       });
       
@@ -193,6 +205,7 @@ describe('N8nApiClient', () => {
       
       mockAxios.addMockResponse('post', `/workflows/${workflowId}/execute`, {
         status: 200,
+        statusText: 'OK', // Added statusText
         data: mockResponse,
       });
       
@@ -214,6 +227,7 @@ describe('N8nApiClient', () => {
       
       mockAxios.addMockResponse('post', '/workflows', {
         status: 200,
+        statusText: 'OK', // Added statusText
         data: mockResponse,
       });
       
@@ -236,6 +250,7 @@ describe('N8nApiClient', () => {
       
       mockAxios.addMockResponse('put', `/workflows/${workflowId}`, {
         status: 200,
+        statusText: 'OK', // Added statusText
         data: mockResponse,
       });
       
@@ -257,6 +272,7 @@ describe('N8nApiClient', () => {
       
       mockAxios.addMockResponse('delete', `/workflows/${workflowId}`, {
         status: 200,
+        statusText: 'OK', // Added statusText
         data: mockResponse,
       });
       
@@ -278,6 +294,7 @@ describe('N8nApiClient', () => {
       
       mockAxios.addMockResponse('post', `/workflows/${workflowId}/activate`, {
         status: 200,
+        statusText: 'OK', // Added statusText
         data: mockResponse,
       });
       
@@ -299,6 +316,7 @@ describe('N8nApiClient', () => {
       
       mockAxios.addMockResponse('post', `/workflows/${workflowId}/deactivate`, {
         status: 200,
+        statusText: 'OK', // Added statusText
         data: mockResponse,
       });
       
@@ -318,6 +336,7 @@ describe('N8nApiClient', () => {
       const mockExecutions = mockApiResponses.executions.list;
       mockAxios.addMockResponse('get', '/executions', {
         status: 200,
+        statusText: 'OK', // Added statusText
         data: mockExecutions,
       });
       
@@ -338,6 +357,7 @@ describe('N8nApiClient', () => {
       const mockExecution = mockApiResponses.executions.single(executionId);
       mockAxios.addMockResponse('get', `/executions/${executionId}`, {
         status: 200,
+        statusText: 'OK', // Added statusText
         data: mockExecution,
       });
       
@@ -359,6 +379,7 @@ describe('N8nApiClient', () => {
       
       mockAxios.addMockResponse('delete', `/executions/${executionId}`, {
         status: 200,
+        statusText: 'OK', // Added statusText
         data: mockResponse,
       });
       

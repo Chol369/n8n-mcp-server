@@ -5,8 +5,8 @@
  * for the n8n MCP Server.
  */
 
-import { McpError as SdkMcpError } from '@modelcontextprotocol/sdk/types.js';
-import { ErrorCode } from './error-codes.js';
+import { McpError as SdkMcpError } from '@modelcontextprotocol/sdk/types.js'; // Add .js back
+import { ErrorCode } from './error-codes.js'; // Add .js back
 
 // Re-export McpError from SDK
 export { McpError } from '@modelcontextprotocol/sdk/types.js';

@@ -4,9 +4,10 @@
  * This module provides a client for interacting with the n8n API.
  */
 
-import axios, { AxiosInstance } from 'axios';
-import { EnvConfig } from '../config/environment.js';
-import { handleAxiosError, N8nApiError } from '../errors/index.js';
+import axios, { AxiosInstance, AxiosResponse } from 'axios'; // Import AxiosResponse
+import { EnvConfig } from '../config/environment.js'; // Already has .js
+import { handleAxiosError, N8nApiError } from '../errors/index.js'; // Already has .js
+import { Workflow, Execution, ExecutionRunData } from '../types/index.js'; // Already has .js
 
 /**
  * n8n API Client class for making requests to the n8n API
@@ -86,9 +87,9 @@ export class N8nApiClient {
    * 
    * @returns Array of workflow objects
    */
-  async getWorkflows(): Promise<any[]> {
+  async getWorkflows(): Promise<Workflow[]> { // Use specific type
     try {
-      const response = await this.axiosInstance.get('/workflows');
+      const response: AxiosResponse<{ data: Workflow[] }> = await this.axiosInstance.get('/workflows');
       return response.data.data || [];
     } catch (error) {
       throw handleAxiosError(error, 'Failed to fetch workflows');
@@ -101,9 +102,9 @@ export class N8nApiClient {
    * @param id Workflow ID
    * @returns Workflow object
    */
-  async getWorkflow(id: string): Promise<any> {
+  async getWorkflow(id: string): Promise<Workflow> { // Use specific type
     try {
-      const response = await this.axiosInstance.get(`/workflows/${id}`);
+      const response: AxiosResponse<Workflow> = await this.axiosInstance.get(`/workflows/${id}`);
       return response.data;
     } catch (error) {
       throw handleAxiosError(error, `Failed to fetch workflow ${id}`);
@@ -115,9 +116,9 @@ export class N8nApiClient {
    * 
    * @returns Array of execution objects
    */
-  async getExecutions(): Promise<any[]> {
+  async getExecutions(): Promise<Execution[]> { // Use specific type
     try {
-      const response = await this.axiosInstance.get('/executions');
+      const response: AxiosResponse<{ data: Execution[] }> = await this.axiosInstance.get('/executions');
       return response.data.data || [];
     } catch (error) {
       throw handleAxiosError(error, 'Failed to fetch executions');
@@ -130,9 +131,9 @@ export class N8nApiClient {
    * @param id Execution ID
    * @returns Execution object
    */
-  async getExecution(id: string): Promise<any> {
+  async getExecution(id: string): Promise<Execution> { // Use specific type
     try {
-      const response = await this.axiosInstance.get(`/executions/${id}`);
+      const response: AxiosResponse<Execution> = await this.axiosInstance.get(`/executions/${id}`);
       return response.data;
     } catch (error) {
       throw handleAxiosError(error, `Failed to fetch execution ${id}`);
@@ -144,11 +145,12 @@ export class N8nApiClient {
    * 
    * @param id Workflow ID
    * @param data Optional data to pass to the workflow
-   * @returns Execution result
+   * @returns Execution result (structure might vary)
    */
-  async executeWorkflow(id: string, data?: Record<string, any>): Promise<any> {
+  async executeWorkflow(id: string, data?: Record<string, any>): Promise<ExecutionRunData> { // Use specific type
     try {
-      const response = await this.axiosInstance.post(`/workflows/${id}/execute`, data || {});
+      // Assuming the response data directly matches ExecutionRunData or similar
+      const response: AxiosResponse<ExecutionRunData> = await this.axiosInstance.post(`/workflows/${id}/execute`, data || {});
       return response.data;
     } catch (error) {
       throw handleAxiosError(error, `Failed to execute workflow ${id}`);
@@ -161,7 +163,7 @@ export class N8nApiClient {
    * @param workflow Workflow object to create
    * @returns Created workflow
    */
-  async createWorkflow(workflow: Record<string, any>): Promise<any> {
+  async createWorkflow(workflow: Partial<Workflow>): Promise<Workflow> { // Use specific types
     try {
       // Make sure settings property is present
       if (!workflow.settings) {
@@ -181,15 +183,16 @@ export class N8nApiClient {
       delete workflowToCreate.id; // Remove id property if it exists
       delete workflowToCreate.createdAt; // Remove createdAt property if it exists
       delete workflowToCreate.updatedAt; // Remove updatedAt property if it exists
-      delete workflowToCreate.tags; // Remove tags property as it's read-only
+      delete workflowToCreate.tags; // Remove tags property if it exists and is read-only
       
-      // Log request for debugging
-      console.error('[DEBUG] Creating workflow with data:', JSON.stringify(workflowToCreate, null, 2));
+      // Removed debug log
+      // console.error('[DEBUG] Creating workflow with data:', JSON.stringify(workflowToCreate, null, 2));
       
-      const response = await this.axiosInstance.post('/workflows', workflowToCreate);
+      const response: AxiosResponse<Workflow> = await this.axiosInstance.post('/workflows', workflowToCreate);
       return response.data;
     } catch (error) {
-      console.error('[ERROR] Create workflow error:', error);
+      // Removed error log, handleAxiosError should suffice
+      // console.error('[ERROR] Create workflow error:', error); 
       throw handleAxiosError(error, 'Failed to create workflow');
     }
   }
@@ -201,9 +204,9 @@ export class N8nApiClient {
    * @param workflow Updated workflow object
    * @returns Updated workflow
    */
-  async updateWorkflow(id: string, workflow: Record<string, any>): Promise<any> {
+  async updateWorkflow(id: string, workflow: Partial<Workflow>): Promise<Workflow> { // Use specific types
     try {
-      const response = await this.axiosInstance.put(`/workflows/${id}`, workflow);
+      const response: AxiosResponse<Workflow> = await this.axiosInstance.put(`/workflows/${id}`, workflow);
       return response.data;
     } catch (error) {
       throw handleAxiosError(error, `Failed to update workflow ${id}`);
@@ -214,11 +217,12 @@ export class N8nApiClient {
    * Delete a workflow
    * 
    * @param id Workflow ID
-   * @returns Deleted workflow
+   * @returns Success indicator
    */
-  async deleteWorkflow(id: string): Promise<any> {
+  async deleteWorkflow(id: string): Promise<{ success: boolean }> { // Use specific type
     try {
-      const response = await this.axiosInstance.delete(`/workflows/${id}`);
+      // Assuming API returns { success: true } or similar on successful delete
+      const response: AxiosResponse<{ success: boolean }> = await this.axiosInstance.delete(`/workflows/${id}`);
       return response.data;
     } catch (error) {
       throw handleAxiosError(error, `Failed to delete workflow ${id}`);
@@ -231,9 +235,10 @@ export class N8nApiClient {
    * @param id Workflow ID
    * @returns Activated workflow
    */
-  async activateWorkflow(id: string): Promise<any> {
+  async activateWorkflow(id: string): Promise<Workflow> { // Use specific type
     try {
-      const response = await this.axiosInstance.post(`/workflows/${id}/activate`);
+      // Assuming API returns the updated workflow object
+      const response: AxiosResponse<Workflow> = await this.axiosInstance.post(`/workflows/${id}/activate`);
       return response.data;
     } catch (error) {
       throw handleAxiosError(error, `Failed to activate workflow ${id}`);
@@ -246,9 +251,10 @@ export class N8nApiClient {
    * @param id Workflow ID
    * @returns Deactivated workflow
    */
-  async deactivateWorkflow(id: string): Promise<any> {
+  async deactivateWorkflow(id: string): Promise<Workflow> { // Use specific type
     try {
-      const response = await this.axiosInstance.post(`/workflows/${id}/deactivate`);
+      // Assuming API returns the updated workflow object
+      const response: AxiosResponse<Workflow> = await this.axiosInstance.post(`/workflows/${id}/deactivate`);
       return response.data;
     } catch (error) {
       throw handleAxiosError(error, `Failed to deactivate workflow ${id}`);
@@ -259,11 +265,12 @@ export class N8nApiClient {
    * Delete an execution
    * 
    * @param id Execution ID
-   * @returns Deleted execution or success message
+   * @returns Success indicator
    */
-  async deleteExecution(id: string): Promise<any> {
+  async deleteExecution(id: string): Promise<{ success: boolean }> { // Use specific type
     try {
-      const response = await this.axiosInstance.delete(`/executions/${id}`);
+      // Assuming API returns { success: true } or similar on successful delete
+      const response: AxiosResponse<{ success: boolean }> = await this.axiosInstance.delete(`/executions/${id}`);
       return response.data;
     } catch (error) {
       throw handleAxiosError(error, `Failed to delete execution ${id}`);

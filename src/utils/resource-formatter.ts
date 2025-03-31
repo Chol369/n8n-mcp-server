@@ -5,7 +5,7 @@
  * in a consistent, user-friendly manner for MCP resources.
  */
 
-import { Workflow, Execution } from '../types/index.js';
+import { Workflow, Execution, N8nNode } from '../types/index.js'; // Import N8nNode
 import { formatExecutionSummary, summarizeExecutions } from './execution-formatter.js';
 
 /**
@@ -14,7 +14,7 @@ import { formatExecutionSummary, summarizeExecutions } from './execution-formatt
  * @param workflow Workflow object
  * @returns Formatted workflow summary
  */
-export function formatWorkflowSummary(workflow: Workflow): Record<string, any> {
+export function formatWorkflowSummary(workflow: Workflow): Record<string, any> { // Keep return flexible
   return {
     id: workflow.id,
     name: workflow.name,
@@ -31,21 +31,23 @@ export function formatWorkflowSummary(workflow: Workflow): Record<string, any> {
  * @param workflow Workflow object
  * @returns Formatted workflow details
  */
-export function formatWorkflowDetails(workflow: Workflow): Record<string, any> {
+export function formatWorkflowDetails(workflow: Workflow): Record<string, any> { // Keep return flexible
   const summary = formatWorkflowSummary(workflow);
   
   // Add additional details
   return {
     ...summary,
-    nodes: workflow.nodes.map(node => ({
+    nodes: workflow.nodes.map((node: N8nNode) => ({ // Use N8nNode type
       id: node.id,
       name: node.name,
       type: node.type,
       position: node.position,
-      parameters: node.parameters,
+      parameters: node.parameters, // Keep parameters as is for now
+      disabled: node.disabled,
+      notes: node.notes,
     })),
-    connections: workflow.connections,
-    staticData: workflow.staticData,
+    connections: workflow.connections, // Keep connections as is for now
+    staticData: workflow.staticData, // Keep staticData as is
     settings: workflow.settings,
     tags: workflow.tags,
     // Exclude potentially sensitive or unuseful information

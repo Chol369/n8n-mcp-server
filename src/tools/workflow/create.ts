@@ -5,8 +5,17 @@
  */
 
 import { BaseWorkflowToolHandler } from './base-handler.js';
-import { ToolCallResult, ToolDefinition } from '../../types/index.js';
+import { ToolCallResult, ToolDefinition, Workflow, N8nNode, N8nConnection } from '../../types/index.js'; // Import specific types
 import { N8nApiError } from '../../errors/index.js';
+
+// Define specific type for create arguments based on ToolDefinition
+interface CreateWorkflowArgs {
+  name: string;
+  nodes?: N8nNode[];
+  connections?: N8nConnection;
+  active?: boolean;
+  tags?: string[];
+}
 
 /**
  * Handler for the create_workflow tool
@@ -18,43 +27,44 @@ export class CreateWorkflowHandler extends BaseWorkflowToolHandler {
    * @param args Tool arguments containing workflow details
    * @returns Created workflow information
    */
-  async execute(args: Record<string, any>): Promise<ToolCallResult> {
+  async execute(args: CreateWorkflowArgs): Promise<ToolCallResult> { // Use specific args type
     return this.handleExecution(async (args) => {
       const { name, nodes, connections, active, tags } = args;
       
       if (!name) {
-        throw new N8nApiError('Missing required parameter: name');
+        // This check might be redundant if 'name' is required in schema, but good for safety
+        throw new N8nApiError('Missing required parameter: name'); 
       }
       
-      // Validate nodes if provided
+      // Basic validation (more robust validation could use Zod or similar)
       if (nodes && !Array.isArray(nodes)) {
         throw new N8nApiError('Parameter "nodes" must be an array');
       }
-      
-      // Validate connections if provided
       if (connections && typeof connections !== 'object') {
         throw new N8nApiError('Parameter "connections" must be an object');
       }
+      if (tags && !Array.isArray(tags)) {
+        throw new N8nApiError('Parameter "tags" must be an array of strings');
+      }
       
-      // Prepare workflow object
-      const workflowData: Record<string, any> = {
+      // Prepare workflow object using Partial<Workflow> for the API call
+      const workflowData: Partial<Workflow> = {
         name,
-        active: active === true,  // Default to false if not specified
+        active: active === true, // Default to false if not specified or undefined
+        nodes: nodes || [], // Default to empty array if not provided
+        connections: connections || {}, // Default to empty object if not provided
+        tags: tags || [], // Default to empty array if not provided
       };
       
-      // Add optional fields if provided
-      if (nodes) workflowData.nodes = nodes;
-      if (connections) workflowData.connections = connections;
-      if (tags) workflowData.tags = tags;
-      
       // Create the workflow
-      const workflow = await this.apiService.createWorkflow(workflowData);
+      const createdWorkflow = await this.apiService.createWorkflow(workflowData);
       
+      // Return summary of the created workflow
       return this.formatSuccess(
         {
-          id: workflow.id,
-          name: workflow.name,
-          active: workflow.active
+          id: createdWorkflow.id,
+          name: createdWorkflow.name,
+          active: createdWorkflow.active
         },
         `Workflow created successfully`
       );
@@ -80,18 +90,18 @@ export function getCreateWorkflowToolDefinition(): ToolDefinition {
         },
         nodes: {
           type: 'array',
-          description: 'Array of node objects that define the workflow',
+          description: 'Array of node objects (N8nNode structure) defining the workflow',
           items: {
-            type: 'object',
+            type: 'object', // Ideally, reference a detailed N8nNode schema here
           },
         },
         connections: {
           type: 'object',
-          description: 'Connection mappings between nodes',
+          description: 'Connection mappings between nodes (N8nConnection structure)',
         },
         active: {
           type: 'boolean',
-          description: 'Whether the workflow should be active upon creation',
+          description: 'Whether the workflow should be active upon creation (defaults to false)',
         },
         tags: {
           type: 'array',

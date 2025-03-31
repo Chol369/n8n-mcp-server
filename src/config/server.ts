@@ -13,14 +13,16 @@ import {
   ListToolsRequestSchema,
   ReadResourceRequestSchema,
 } from '@modelcontextprotocol/sdk/types.js';
-import { getEnvConfig } from './environment.js';
-import { setupWorkflowTools } from '../tools/workflow/index.js';
-import { setupExecutionTools } from '../tools/execution/index.js';
+import { getEnvConfig, EnvConfig } from './environment.js'; // Import EnvConfig
+import { setupWorkflowTools, ListWorkflowsHandler, GetWorkflowHandler, CreateWorkflowHandler, UpdateWorkflowHandler, DeleteWorkflowHandler, ActivateWorkflowHandler, DeactivateWorkflowHandler } from '../tools/workflow/index.js';
+import { setupExecutionTools, ListExecutionsHandler, GetExecutionHandler, DeleteExecutionHandler, RunWebhookHandler } from '../tools/execution/index.js';
 import { setupResourceHandlers } from '../resources/index.js';
-import { createApiService } from '../api/n8n-client.js';
+// Update imports to use N8nApiClient and its factory
+import { createN8nApiClient, N8nApiClient } from '../api/n8n-client.js'; 
+import { McpError, ErrorCode } from '../errors/index.js'; 
 
 // Import types
-import { ToolCallResult } from '../types/index.js';
+import { ToolCallResult, BaseToolHandler } from '../types/index.js'; 
 
 /**
  * Configure and return an MCP server instance with all tools and resources
@@ -31,13 +33,13 @@ export async function configureServer(): Promise<Server> {
   // Get validated environment configuration
   const envConfig = getEnvConfig();
   
-  // Create n8n API service
-  const apiService = createApiService(envConfig);
+  // Create n8n API client instance
+  const apiClient = createN8nApiClient(envConfig); // Use new factory function name
   
   // Verify n8n API connectivity
   try {
     console.error('Verifying n8n API connectivity...');
-    await apiService.checkConnectivity();
+    await apiClient.checkConnectivity(); // Use apiClient instance
     console.error(`Successfully connected to n8n API at ${envConfig.n8nApiUrl}`);
   } catch (error) {
     console.error('ERROR: Failed to connect to n8n API:', error instanceof Error ? error.message : error);
@@ -58,10 +60,11 @@ export async function configureServer(): Promise<Server> {
     }
   );
 
-  // Set up all request handlers
+  // Set up all request handlers, passing the single apiClient instance where needed
   setupToolListRequestHandler(server);
-  setupToolCallRequestHandler(server);
-  setupResourceHandlers(server, envConfig);
+  setupToolCallRequestHandler(server, apiClient); // Pass apiClient
+  // Pass envConfig to resource handlers as originally intended
+  setupResourceHandlers(server, envConfig); 
 
   return server;
 }
@@ -87,72 +90,44 @@ function setupToolListRequestHandler(server: Server): void {
  * Set up the tool call request handler for the server
  * 
  * @param server MCP server instance
+ * @param apiClient The shared N8nApiClient instance
  */
-function setupToolCallRequestHandler(server: Server): void {
+// Update function signature to accept N8nApiClient
+function setupToolCallRequestHandler(server: Server, apiClient: N8nApiClient): void { 
+
+  // Map tool names to their handler classes - Update constructor signature type
+  // The constructor now expects N8nApiClient (which is aliased as N8nApiService)
+  const toolHandlerMap: Record<string, new (apiClient: N8nApiClient) => BaseToolHandler> = {
+    'list_workflows': ListWorkflowsHandler,
+    'get_workflow': GetWorkflowHandler,
+    'create_workflow': CreateWorkflowHandler,
+    'update_workflow': UpdateWorkflowHandler,
+    'delete_workflow': DeleteWorkflowHandler,
+    'activate_workflow': ActivateWorkflowHandler,
+    'deactivate_workflow': DeactivateWorkflowHandler,
+    'list_executions': ListExecutionsHandler,
+    'get_execution': GetExecutionHandler,
+    'delete_execution': DeleteExecutionHandler,
+    'run_webhook': RunWebhookHandler,
+    // Add other tools here
+  };
+
   server.setRequestHandler(CallToolRequestSchema, async (request) => {
     const toolName = request.params.name;
     const args = request.params.arguments || {};
 
-    let result: ToolCallResult;
-
     try {
-      // Import handlers
-      const { 
-        ListWorkflowsHandler, 
-        GetWorkflowHandler,
-        CreateWorkflowHandler,
-        UpdateWorkflowHandler,
-        DeleteWorkflowHandler,
-        ActivateWorkflowHandler,
-        DeactivateWorkflowHandler
-      } = await import('../tools/workflow/index.js');
-      
-      const {
-        ListExecutionsHandler,
-        GetExecutionHandler,
-        DeleteExecutionHandler,
-        RunWebhookHandler
-      } = await import('../tools/execution/index.js');
-      
-      // Route the tool call to the appropriate handler
-      if (toolName === 'list_workflows') {
-        const handler = new ListWorkflowsHandler();
-        result = await handler.execute(args);
-      } else if (toolName === 'get_workflow') {
-        const handler = new GetWorkflowHandler();
-        result = await handler.execute(args);
-      } else if (toolName === 'create_workflow') {
-        const handler = new CreateWorkflowHandler();
-        result = await handler.execute(args);
-      } else if (toolName === 'update_workflow') {
-        const handler = new UpdateWorkflowHandler();
-        result = await handler.execute(args);
-      } else if (toolName === 'delete_workflow') {
-        const handler = new DeleteWorkflowHandler();
-        result = await handler.execute(args);
-      } else if (toolName === 'activate_workflow') {
-        const handler = new ActivateWorkflowHandler();
-        result = await handler.execute(args);
-      } else if (toolName === 'deactivate_workflow') {
-        const handler = new DeactivateWorkflowHandler();
-        result = await handler.execute(args);
-      } else if (toolName === 'list_executions') {
-        const handler = new ListExecutionsHandler();
-        result = await handler.execute(args);
-      } else if (toolName === 'get_execution') {
-        const handler = new GetExecutionHandler();
-        result = await handler.execute(args);
-      } else if (toolName === 'delete_execution') {
-        const handler = new DeleteExecutionHandler();
-        result = await handler.execute(args);
-      } else if (toolName === 'run_webhook') {
-        const handler = new RunWebhookHandler();
-        result = await handler.execute(args);
-      } else {
-        throw new Error(`Unknown tool: ${toolName}`);
+      const HandlerClass = toolHandlerMap[toolName];
+
+      if (!HandlerClass) {
+        throw new McpError(ErrorCode.NotImplemented, `Unknown tool: ${toolName}`); // Use NotImplemented
       }
 
-      // Converting to MCP SDK expected format
+      // Pass the apiClient instance to the constructor
+      const handler = new HandlerClass(apiClient); 
+      const result: ToolCallResult = await handler.execute(args);
+
+      // Return result in MCP SDK expected format
       return {
         content: result.content,
         isError: result.isError,

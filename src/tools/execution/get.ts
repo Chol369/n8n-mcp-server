@@ -10,6 +10,11 @@ import { McpError } from '@modelcontextprotocol/sdk/types.js';
 import { ErrorCode } from '../../errors/error-codes.js';
 import { formatExecutionDetails } from '../../utils/execution-formatter.js';
 
+// Define specific type for get arguments
+interface GetExecutionArgs {
+  executionId: string;
+}
+
 /**
  * Handler for the get_execution tool
  */
@@ -20,8 +25,8 @@ export class GetExecutionHandler extends BaseExecutionToolHandler {
    * @param args Tool arguments (executionId)
    * @returns Execution details
    */
-  async execute(args: Record<string, any>): Promise<ToolCallResult> {
-    return this.handleExecution(async () => {
+  async execute(args: GetExecutionArgs): Promise<ToolCallResult> { // Use specific args type
+    return this.handleExecution(async (args) => { // Pass args to handler
       // Validate required parameters
       if (!args.executionId) {
         throw new McpError(
@@ -40,7 +45,7 @@ export class GetExecutionHandler extends BaseExecutionToolHandler {
         formattedExecution,
         `Execution Details for ID: ${args.executionId}`
       );
-    }, args);
+    }, args); // Pass args to handleExecution
   }
   
 }

@@ -2,6 +2,7 @@
  * Axios mock utilities for n8n MCP Server tests
  */
 
+import { jest } from '@jest/globals'; // Import jest
 import { AxiosRequestConfig, AxiosResponse } from 'axios';
 
 export interface MockResponse {
@@ -27,83 +28,84 @@ export const createMockAxiosResponse = (options: Partial<MockResponse> = {}): Ax
  */
 export const createMockAxiosInstance = () => {
   const mockRequests: Record<string, any[]> = {};
-  const mockResponses: Record<string, MockResponse[]> = {};
-  
+  const mockResponses: Record<string, (MockResponse | Error)[]> = {}; // Allow Error type
+
   const mockInstance = {
-    get: jest.fn(),
-    post: jest.fn(),
-    put: jest.fn(),
-    delete: jest.fn(),
+    get: jest.fn<any>(), // Add type hint for mock function
+    post: jest.fn<any>(), // Add type hint for mock function
+    put: jest.fn<any>(), // Add type hint for mock function
+    delete: jest.fn<any>(), // Add type hint for mock function
     interceptors: {
       request: {
-        use: jest.fn(),
+        use: jest.fn<any>(), // Add type hint for mock function
       },
       response: {
-        use: jest.fn(),
+        use: jest.fn<any>(), // Add type hint for mock function
       },
     },
     defaults: {},
-    
+
     // Helper method to add mock response
     addMockResponse(method: string, url: string, response: MockResponse | Error) {
-      if (!mockResponses[`${method}:${url}`]) {
-        mockResponses[`${method}:${url}`] = [];
+      const key = `${method}:${url}`;
+      if (!mockResponses[key]) {
+        mockResponses[key] = [];
       }
-      
-      if (response instanceof Error) {
-        mockResponses[`${method}:${url}`].push(response as any);
-      } else {
-        mockResponses[`${method}:${url}`].push(response);
-      }
+      mockResponses[key].push(response);
     },
-    
+
     // Helper method to get request history
     getRequestHistory(method: string, url: string) {
-      return mockRequests[`${method}:${url}`] || [];
+      const key = `${method}:${url}`;
+      return mockRequests[key] || [];
     },
-    
+
     // Reset all mocks
     reset() {
       Object.keys(mockRequests).forEach(key => {
         delete mockRequests[key];
       });
-      
+
       Object.keys(mockResponses).forEach(key => {
         delete mockResponses[key];
       });
-      
+
       mockInstance.get.mockReset();
       mockInstance.post.mockReset();
       mockInstance.put.mockReset();
       mockInstance.delete.mockReset();
+      mockInstance.interceptors.request.use.mockReset();
+      mockInstance.interceptors.response.use.mockReset();
     }
   };
-  
+
   // Setup method implementations
-  ['get', 'post', 'put', 'delete'].forEach(method => {
-    mockInstance[method].mockImplementation(async (url: string, data?: any) => {
+  ['get', 'post', 'put', 'delete'].forEach((method) => { // Remove explicit type annotation
+    (mockInstance as any)[method].mockImplementation(async (url: string, data?: any) => { // Keep cast for dynamic access
       const requestKey = `${method}:${url}`;
-      
+
       if (!mockRequests[requestKey]) {
         mockRequests[requestKey] = [];
       }
-      
+
       mockRequests[requestKey].push(data);
-      
+
       if (mockResponses[requestKey] && mockResponses[requestKey].length > 0) {
-        const response = mockResponses[requestKey].shift();
-        
+        const response = mockResponses[requestKey].shift(); // shift() can return undefined
+
         if (response instanceof Error) {
           throw response;
         }
         
-        return createMockAxiosResponse(response);
+        if (response) { // Check if response is defined
+            return createMockAxiosResponse(response);
+        }
       }
-      
+
       throw new Error(`No mock response defined for ${method.toUpperCase()} ${url}`);
     });
   });
-  
+
   return mockInstance;
 };
 

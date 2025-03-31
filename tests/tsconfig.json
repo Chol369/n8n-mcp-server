@@ -3,10 +3,17 @@
   "compilerOptions": {
     "types": ["jest", "node"],
     "esModuleInterop": true,
-    "rootDir": ".."
+    // Remove rootDir override as base config now handles it
+    // "rootDir": "..", 
+    "outDir": "../build/tests", // Optional: specify separate output for tests if needed
+    "composite": true // Keep composite for potential future use
   },
   "include": [
-    "**/*.ts",
-    "**/*.tsx"
+    "**/*.ts", // Keep existing test files
+    "../src/**/*.ts" // Add back source files referenced by tests
+  ],
+  "exclude": [ // Add exclude for build output if needed
+    "../node_modules",
+    "../build" 
   ]
 }

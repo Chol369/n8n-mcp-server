@@ -1,17 +1,18 @@
 module.exports = {
-  // Use commonjs style export
-  preset: 'ts-jest',
+  preset: 'ts-jest/presets/default-esm', // Use ESM preset for ts-jest
   testEnvironment: 'node',
   transform: {
-    '^.+\\.tsx?$': 'babel-jest',
+    // Use ts-jest transformer with ESM support and point to tests tsconfig
+    '^.+\\.tsx?$': ['ts-jest', { useESM: true, tsconfig: 'tests/tsconfig.json' }], 
   },
-  // Allow src and test folders to resolve imports properly
-  moduleNameMapper: {
-    '^(\\.{1,2}/.*)\\.js$': '$1',
+  extensionsToTreatAsEsm: ['.ts'], // Treat .ts as ESM
+  moduleNameMapper: { 
+    // Recommended mapper for ts-jest ESM support: map extensionless paths to .js
+    '^(\\.{1,2}/.*)$': '$1.js', 
   },
-  // Handle the modelcontextprotocol SDK
+  // Handle the modelcontextprotocol SDK and other potential ESM dependencies
   transformIgnorePatterns: [
-    "node_modules/(?!(@modelcontextprotocol)/)"
+    "/node_modules/(?!(@modelcontextprotocol/sdk|axios|another-esm-dep)/)" // Adjust as needed
   ],
   collectCoverage: true,
   coverageDirectory: 'coverage',

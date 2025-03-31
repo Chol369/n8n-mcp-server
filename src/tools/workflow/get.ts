@@ -15,12 +15,12 @@ export class GetWorkflowHandler extends BaseWorkflowToolHandler {
   /**
    * Execute the tool
    * 
-   * @param args Tool arguments containing workflowId
-   * @returns Workflow details
-   */
-  async execute(args: Record<string, any>): Promise<ToolCallResult> {
+ * @param args Tool arguments containing workflowId
+ * @returns Workflow details
+ */
+  async execute(args: { workflowId: string }): Promise<ToolCallResult> { // Use specific type for args
     return this.handleExecution(async (args) => {
-      const { workflowId } = args;
+      const { workflowId } = args; // Destructuring remains the same
       
       if (!workflowId) {
         throw new N8nApiError('Missing required parameter: workflowId');

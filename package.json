@@ -9,9 +9,9 @@
     "start": "node build/index.js",
     "dev": "tsc -w",
     "lint": "eslint --ext .ts src/",
-    "test": "node --experimental-vm-modules run-tests.js",
-    "test:watch": "node --experimental-vm-modules run-tests.js --watch",
-    "test:coverage": "node --experimental-vm-modules run-tests.js --coverage",
+    "test": "NODE_OPTIONS=--experimental-vm-modules jest --config ./jest.config.cjs",
+    "test:watch": "NODE_OPTIONS=--experimental-vm-modules jest --config ./jest.config.cjs --watch",
+    "test:coverage": "NODE_OPTIONS=--experimental-vm-modules jest --config ./jest.config.cjs --coverage",
     "prepare": "npm run build"
   },
   "bin": {

@@ -124,30 +124,29 @@ The webhook authentication is handled automatically using the `N8N_WEBHOOK_USERN
 
 ### Workflow Management
 
-- `workflow_list`: List all workflows
-- `workflow_get`: Get details of a specific workflow
-- `workflow_create`: Create a new workflow
-- `workflow_update`: Update an existing workflow
-- `workflow_delete`: Delete a workflow
-- `workflow_activate`: Activate a workflow
-- `workflow_deactivate`: Deactivate a workflow
+- `list_workflows`: List all workflows
+- `get_workflow`: Get details of a specific workflow
+- `create_workflow`: Create a new workflow
+- `update_workflow`: Update an existing workflow
+- `delete_workflow`: Delete a workflow
+- `activate_workflow`: Activate a workflow
+- `deactivate_workflow`: Deactivate a workflow
 
 ### Execution Management
 
-- `execution_run`: Execute a workflow via the API
 - `run_webhook`: Execute a workflow via a webhook
-- `execution_get`: Get details of a specific execution
-- `execution_list`: List executions for a workflow
-- `execution_stop`: Stop a running execution
+- `get_execution`: Get details of a specific execution
+- `list_executions`: List executions for a workflow
+- `delete_execution`: Delete a specific execution
 
 ## Resources
 
 The server provides the following resources:
 
-- `n8n://workflows/list`: List of all workflows
-- `n8n://workflow/{id}`: Details of a specific workflow
-- `n8n://executions/{workflowId}`: List of executions for a workflow
-- `n8n://execution/{id}`: Details of a specific execution
+- `n8n://workflows`: List of all workflows (static resource)
+- `n8n://workflows/{id}`: Details of a specific workflow (dynamic resource template)
+- `n8n://executions/{id}`: Details of a specific execution (dynamic resource template)
+- `n8n://execution-stats`: Summary statistics of recent executions (static resource)
 
 ## Development
 

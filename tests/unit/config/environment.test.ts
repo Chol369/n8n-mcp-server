@@ -3,10 +3,10 @@
  */
 
 import { describe, it, expect, beforeEach, afterEach, jest } from '@jest/globals';
-import { getEnvConfig, loadEnvironmentVariables, ENV_VARS } from '../../../src/config/environment.js';
+import { getEnvConfig, loadEnvironmentVariables, ENV_VARS } from '../../../src/config/environment.js'; // Add .js
 import { McpError } from '@modelcontextprotocol/sdk/types.js';
-import { ErrorCode } from '../../../src/errors/error-codes.js';
-import { mockEnv } from '../../test-setup.js';
+import { ErrorCode } from '../../../src/errors/error-codes.js'; // Add .js
+import { mockEnv } from '../../test-setup.js'; // Add .js
 
 describe('Environment Configuration', () => {
   const originalEnv = process.env;
@@ -36,6 +36,8 @@ describe('Environment Configuration', () => {
       // Setup
       process.env[ENV_VARS.N8N_API_URL] = 'https://n8n.example.com/api/v1';
       process.env[ENV_VARS.N8N_API_KEY] = 'test-api-key';
+      process.env[ENV_VARS.N8N_WEBHOOK_USERNAME] = 'test-user'; // Add webhook user
+      process.env[ENV_VARS.N8N_WEBHOOK_PASSWORD] = 'test-pass'; // Add webhook pass
       
       // Execute
       const config = getEnvConfig();
@@ -44,6 +46,8 @@ describe('Environment Configuration', () => {
       expect(config).toEqual({
         n8nApiUrl: 'https://n8n.example.com/api/v1',
         n8nApiKey: 'test-api-key',
+        n8nWebhookUsername: 'test-user',
+        n8nWebhookPassword: 'test-pass',
         debug: false,
       });
     });
@@ -52,6 +56,8 @@ describe('Environment Configuration', () => {
       // Setup
       process.env[ENV_VARS.N8N_API_URL] = 'https://n8n.example.com/api/v1';
       process.env[ENV_VARS.N8N_API_KEY] = 'test-api-key';
+      process.env[ENV_VARS.N8N_WEBHOOK_USERNAME] = 'test-user'; // Add webhook user
+      process.env[ENV_VARS.N8N_WEBHOOK_PASSWORD] = 'test-pass'; // Add webhook pass
       process.env[ENV_VARS.DEBUG] = 'true';
       
       // Execute
@@ -65,6 +71,8 @@ describe('Environment Configuration', () => {
       // Setup
       process.env[ENV_VARS.N8N_API_URL] = 'https://n8n.example.com/api/v1';
       process.env[ENV_VARS.N8N_API_KEY] = 'test-api-key';
+      process.env[ENV_VARS.N8N_WEBHOOK_USERNAME] = 'test-user'; // Add webhook user
+      process.env[ENV_VARS.N8N_WEBHOOK_PASSWORD] = 'test-pass'; // Add webhook pass
       process.env[ENV_VARS.DEBUG] = 'TRUE';
       
       // Execute
@@ -78,6 +86,8 @@ describe('Environment Configuration', () => {
       // Setup
       process.env[ENV_VARS.N8N_API_URL] = 'https://n8n.example.com/api/v1';
       process.env[ENV_VARS.N8N_API_KEY] = 'test-api-key';
+      process.env[ENV_VARS.N8N_WEBHOOK_USERNAME] = 'test-user'; // Add webhook user
+      process.env[ENV_VARS.N8N_WEBHOOK_PASSWORD] = 'test-pass'; // Add webhook pass
       process.env[ENV_VARS.DEBUG] = 'yes';
       
       // Execute
@@ -117,6 +127,8 @@ describe('Environment Configuration', () => {
       // Setup
       process.env[ENV_VARS.N8N_API_URL] = 'invalid-url';
       process.env[ENV_VARS.N8N_API_KEY] = 'test-api-key';
+      process.env[ENV_VARS.N8N_WEBHOOK_USERNAME] = 'test-user'; // Add webhook user
+      process.env[ENV_VARS.N8N_WEBHOOK_PASSWORD] = 'test-pass'; // Add webhook pass
       
       // Execute & Assert
       expect(() => getEnvConfig()).toThrow(
@@ -131,6 +143,8 @@ describe('Environment Configuration', () => {
       // Setup
       process.env[ENV_VARS.N8N_API_URL] = 'http://localhost:5678/api/v1';
       process.env[ENV_VARS.N8N_API_KEY] = 'test-api-key';
+      process.env[ENV_VARS.N8N_WEBHOOK_USERNAME] = 'test-user'; // Add webhook user
+      process.env[ENV_VARS.N8N_WEBHOOK_PASSWORD] = 'test-pass'; // Add webhook pass
       
       // Execute
       const config = getEnvConfig();
@@ -143,6 +157,8 @@ describe('Environment Configuration', () => {
       // Setup
       process.env[ENV_VARS.N8N_API_URL] = 'https://n8n.example.com/api/v1/';
       process.env[ENV_VARS.N8N_API_KEY] = 'test-api-key';
+      process.env[ENV_VARS.N8N_WEBHOOK_USERNAME] = 'test-user'; // Add webhook user
+      process.env[ENV_VARS.N8N_WEBHOOK_PASSWORD] = 'test-pass'; // Add webhook pass
       
       // Execute
       const config = getEnvConfig();
@@ -155,14 +171,18 @@ describe('Environment Configuration', () => {
   describe('with mockEnv helper', () => {
     // Using the mockEnv helper from test-setup
     mockEnv({
-      [ENV_VARS.N8N_API_URL]: 'https://n8n.example.com/api/v1',
-      [ENV_VARS.N8N_API_KEY]: 'test-api-key',
+      [ENV_VARS.N8N_API_URL]: 'https://mock.n8n.com/api/v1',
+      [ENV_VARS.N8N_API_KEY]: 'mock-api-key',
+      [ENV_VARS.N8N_WEBHOOK_USERNAME]: 'mock-user', // Add webhook user
+      [ENV_VARS.N8N_WEBHOOK_PASSWORD]: 'mock-pass', // Add webhook pass
     });
 
     it('should use the mocked environment variables', () => {
       const config = getEnvConfig();
-      expect(config.n8nApiUrl).toBe('https://n8n.example.com/api/v1');
-      expect(config.n8nApiKey).toBe('test-api-key');
+      expect(config.n8nApiUrl).toBe('https://mock.n8n.com/api/v1');
+      expect(config.n8nApiKey).toBe('mock-api-key');
+      expect(config.n8nWebhookUsername).toBe('mock-user');
+      expect(config.n8nWebhookPassword).toBe('mock-pass');
     });
   });
 });

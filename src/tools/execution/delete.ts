@@ -9,6 +9,11 @@ import { ToolCallResult, ToolDefinition } from '../../types/index.js';
 import { McpError } from '@modelcontextprotocol/sdk/types.js';
 import { ErrorCode } from '../../errors/error-codes.js';
 
+// Define specific type for delete arguments
+interface DeleteExecutionArgs {
+  executionId: string;
+}
+
 /**
  * Handler for the delete_execution tool
  */
@@ -19,8 +24,8 @@ export class DeleteExecutionHandler extends BaseExecutionToolHandler {
    * @param args Tool arguments (executionId)
    * @returns Result of the deletion operation
    */
-  async execute(args: Record<string, any>): Promise<ToolCallResult> {
-    return this.handleExecution(async () => {
+  async execute(args: DeleteExecutionArgs): Promise<ToolCallResult> { // Use specific args type
+    return this.handleExecution(async (args) => { // Pass args to handler
       // Validate required parameters
       if (!args.executionId) {
         throw new McpError(
@@ -39,7 +44,7 @@ export class DeleteExecutionHandler extends BaseExecutionToolHandler {
         { id: executionId, deleted: true },
         `Successfully deleted execution with ID: ${executionId}`
       );
-    }, args);
+    }, args); // Pass args to handleExecution
   }
 }
 
