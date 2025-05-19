@@ -25,6 +25,41 @@ import {
   getExecutionStatsResourceMetadata,
   getExecutionStatsResourceUri,
 } from './static/execution-stats.js';
+import {
+  getUsersResource,
+  getUsersResourceMetadata,
+  getUsersResourceUri,
+} from './static/users.js';
+import {
+  getSourceControlResource,
+  getSourceControlResourceMetadata,
+  getSourceControlResourceUri,
+} from './static/source-control.js';
+import {
+  getSecurityAuditResource,
+  getSecurityAuditResourceMetadata,
+  getSecurityAuditResourceUri,
+} from './static/security-audit.js';
+import {
+  getProjectsResource,
+  getProjectsResourceMetadata,
+  getProjectsResourceUri,
+} from './static/projects.js';
+import {
+  getVariablesResource,
+  getVariablesResourceMetadata,
+  getVariablesResourceUri,
+} from './static/variables.js';
+import {
+  getTagsResource,
+  getTagsResourceMetadata,
+  getTagsResourceUri,
+} from './static/tags.js';
+import {
+  getWorkflowTagsResource,
+  getWorkflowTagsResourceMetadata,
+  getWorkflowTagsResourceUri,
+} from './static/workflow-tags.js';
 
 // Import dynamic resource handlers
 import {
@@ -69,6 +104,13 @@ function setupStaticResources(server: Server, envConfig: EnvConfig): void {
       resources: [
         getWorkflowsResourceMetadata(),
         getExecutionStatsResourceMetadata(),
+        getUsersResourceMetadata(),
+        getSourceControlResourceMetadata(),
+        getSecurityAuditResourceMetadata(),
+        getProjectsResourceMetadata(),
+        getVariablesResourceMetadata(),
+        getTagsResourceMetadata(),
+        getWorkflowTagsResourceMetadata(),
       ],
     };
   });
@@ -114,6 +156,97 @@ function setupDynamicResources(server: Server, envConfig: EnvConfig): void {
       
       if (uri === getExecutionStatsResourceUri()) {
         const content = await getExecutionStatsResource(apiService);
+        return {
+          contents: [
+            {
+              uri,
+              mimeType: 'application/json',
+              text: content,
+            },
+          ],
+        };
+      }
+      
+      if (uri === getUsersResourceUri()) {
+        const content = await getUsersResource(apiService);
+        return {
+          contents: [
+            {
+              uri,
+              mimeType: 'application/json',
+              text: content,
+            },
+          ],
+        };
+      }
+      
+      if (uri === getSourceControlResourceUri()) {
+        const content = await getSourceControlResource();
+        return {
+          contents: [
+            {
+              uri,
+              mimeType: 'application/json',
+              text: content,
+            },
+          ],
+        };
+      }
+      
+      if (uri === getSecurityAuditResourceUri()) {
+        const content = await getSecurityAuditResource(apiService);
+        return {
+          contents: [
+            {
+              uri,
+              mimeType: 'application/json',
+              text: content,
+            },
+          ],
+        };
+      }
+      
+      if (uri === getProjectsResourceUri()) {
+        const content = await getProjectsResource(apiService);
+        return {
+          contents: [
+            {
+              uri,
+              mimeType: 'application/json',
+              text: content,
+            },
+          ],
+        };
+      }
+      
+      if (uri === getVariablesResourceUri()) {
+        const content = await getVariablesResource(apiService);
+        return {
+          contents: [
+            {
+              uri,
+              mimeType: 'application/json',
+              text: content,
+            },
+          ],
+        };
+      }
+      
+      if (uri === getTagsResourceUri()) {
+        const content = await getTagsResource(apiService);
+        return {
+          contents: [
+            {
+              uri,
+              mimeType: 'application/json',
+              text: content,
+            },
+          ],
+        };
+      }
+      
+      if (uri === getWorkflowTagsResourceUri()) {
+        const content = await getWorkflowTagsResource(apiService);
         return {
           contents: [
             {

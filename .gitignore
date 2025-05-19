@@ -27,6 +27,12 @@ yarn-error.log*
 !.vscode/launch.json
 !.vscode/extensions.json
 
+# Windsurf
+.windsurf/
+
+# Implementation Plan
+/implementation-plan
+
 # macOS
 .DS_Store
 

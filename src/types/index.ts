@@ -5,6 +5,8 @@
  * and bridges compatibility with the MCP SDK.
  */
 
+export * from './workflow-tag.js';
+
 // Tool definition for MCP tools
 export interface ToolDefinition {
   name: string;
@@ -52,4 +54,15 @@ export interface Execution {
     };
   };
   [key: string]: any;
+}
+
+// Parameters for executing a workflow
+export interface ExecuteWorkflowParams {
+  workflowId: string;
+  data?: Record<string, any>;
+}
+
+// Parameters for stopping a running execution
+export interface StopExecutionParams {
+  executionId: string;
 }

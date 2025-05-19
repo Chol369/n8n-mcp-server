@@ -2,7 +2,10 @@
  * Axios mock utilities for n8n MCP Server tests
  */
 
+import { jest } from '@jest/globals';
 import { AxiosRequestConfig, AxiosResponse } from 'axios';
+
+// Jest mocks need proper type casting to handle axios methods
 
 export interface MockResponse {
   data: any;
@@ -29,11 +32,39 @@ export const createMockAxiosInstance = () => {
   const mockRequests: Record<string, any[]> = {};
   const mockResponses: Record<string, MockResponse[]> = {};
   
+  // Helper function to handle request logic (defined outside mock implementations to avoid repeating code)
+  function handleRequest(method: string, url: string, data?: any) {
+    const requestKey = `${method}:${url}`;
+    
+    if (!mockRequests[requestKey]) {
+      mockRequests[requestKey] = [];
+    }
+    
+    mockRequests[requestKey].push(data);
+    
+    if (mockResponses[requestKey] && mockResponses[requestKey].length > 0) {
+      const response = mockResponses[requestKey].shift();
+      
+      if (response instanceof Error) {
+        throw response;
+      }
+      
+      return createMockAxiosResponse(response);
+    }
+    
+    throw new Error(`No mock response defined for ${method.toUpperCase()} ${url}`);
+  }
+  
   const mockInstance = {
-    get: jest.fn(),
-    post: jest.fn(),
-    put: jest.fn(),
-    delete: jest.fn(),
+    // @ts-expect-error - Jest mock typing issues with function parameter compatibility
+    get: jest.fn().mockImplementation((url: string) => handleRequest('get', url)),
+    // @ts-expect-error - Jest mock typing issues with function parameter compatibility
+    post: jest.fn().mockImplementation((url: string, data?: any) => handleRequest('post', url, data)),
+    // @ts-expect-error - Jest mock typing issues with function parameter compatibility
+    put: jest.fn().mockImplementation((url: string, data?: any) => handleRequest('put', url, data)),
+    // @ts-expect-error - Jest mock typing issues with function parameter compatibility
+    delete: jest.fn().mockImplementation((url: string) => handleRequest('delete', url)),
+    
     interceptors: {
       request: {
         use: jest.fn(),
@@ -42,6 +73,7 @@ export const createMockAxiosInstance = () => {
         use: jest.fn(),
       },
     },
+    
     defaults: {},
     
     // Helper method to add mock response
@@ -72,37 +104,12 @@ export const createMockAxiosInstance = () => {
         delete mockResponses[key];
       });
       
-      mockInstance.get.mockReset();
-      mockInstance.post.mockReset();
-      mockInstance.put.mockReset();
-      mockInstance.delete.mockReset();
+      mockInstance.get.mockClear();
+      mockInstance.post.mockClear();
+      mockInstance.put.mockClear();
+      mockInstance.delete.mockClear();
     }
   };
-  
-  // Setup method implementations
-  ['get', 'post', 'put', 'delete'].forEach(method => {
-    mockInstance[method].mockImplementation(async (url: string, data?: any) => {
-      const requestKey = `${method}:${url}`;
-      
-      if (!mockRequests[requestKey]) {
-        mockRequests[requestKey] = [];
-      }
-      
-      mockRequests[requestKey].push(data);
-      
-      if (mockResponses[requestKey] && mockResponses[requestKey].length > 0) {
-        const response = mockResponses[requestKey].shift();
-        
-        if (response instanceof Error) {
-          throw response;
-        }
-        
-        return createMockAxiosResponse(response);
-      }
-      
-      throw new Error(`No mock response defined for ${method.toUpperCase()} ${url}`);
-    });
-  });
   
   return mockInstance;
 };

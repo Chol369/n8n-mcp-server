@@ -8,16 +8,21 @@
 import { Server } from '@modelcontextprotocol/sdk/server/index.js';
 import {
   CallToolRequestSchema,
-  ListResourcesRequestSchema,
-  ListResourceTemplatesRequestSchema,
   ListToolsRequestSchema,
-  ReadResourceRequestSchema,
 } from '@modelcontextprotocol/sdk/types.js';
 import { getEnvConfig } from './environment.js';
 import { setupWorkflowTools } from '../tools/workflow/index.js';
 import { setupExecutionTools } from '../tools/execution/index.js';
 import { setupResourceHandlers } from '../resources/index.js';
 import { createApiService } from '../api/n8n-client.js';
+import { setupUserTools } from '../tools/user/index.js';
+import { setupSourceControlTools } from '../tools/source-control/index.js';
+import { setupSecurityAuditTools } from '../tools/security-audit/index.js';
+import { setupWorkflowTagTools } from '../tools/workflow-tag/index.js';
+import { setupProjectTools } from '../tools/project/index.js';
+import { setupVariableTools } from '../tools/variable/index.js';
+import { setupTagTools } from '../tools/tag/index.js';
+import { setupCredentialTools } from '../tools/credential/index.js';
 
 // Import types
 import { ToolCallResult } from '../types/index.js';
@@ -73,12 +78,33 @@ export async function configureServer(): Promise<Server> {
  */
 function setupToolListRequestHandler(server: Server): void {
   server.setRequestHandler(ListToolsRequestSchema, async () => {
-    // Combine tools from workflow and execution modules
+    // Combine tools from all modules
     const workflowTools = await setupWorkflowTools();
     const executionTools = await setupExecutionTools();
+    const tagTools = await setupTagTools();
+    const variableTools = await setupVariableTools();
+    const projectTools = await setupProjectTools();
+    const securityAuditTools = await setupSecurityAuditTools();
+    const sourceControlTools = await setupSourceControlTools();
+    const userTools = await setupUserTools();
+    const credentialTools = await setupCredentialTools();
+    const workflowTagTools = await setupWorkflowTagTools();
+    
+    // All tools are now registered via setupXxxTools functions
 
     return {
-      tools: [...workflowTools, ...executionTools],
+      tools: [
+        ...workflowTools, 
+        ...executionTools, 
+        ...tagTools, 
+        ...variableTools, 
+        ...projectTools, 
+        ...securityAuditTools, 
+        ...sourceControlTools,
+        ...userTools,
+        ...credentialTools,
+        ...workflowTagTools
+      ],
     };
   });
 }
@@ -96,13 +122,14 @@ function setupToolCallRequestHandler(server: Server): void {
     let result: ToolCallResult;
 
     try {
-      // Import handlers
+      // Import handlers - all officially supported workflow operations
       const { 
         ListWorkflowsHandler, 
-        GetWorkflowHandler,
+        ReadWorkflowHandler,
         CreateWorkflowHandler,
         UpdateWorkflowHandler,
         DeleteWorkflowHandler,
+        MoveWorkflowHandler,
         ActivateWorkflowHandler,
         DeactivateWorkflowHandler
       } = await import('../tools/workflow/index.js');
@@ -111,15 +138,73 @@ function setupToolCallRequestHandler(server: Server): void {
         ListExecutionsHandler,
         GetExecutionHandler,
         DeleteExecutionHandler,
-        RunWebhookHandler
+        RunWebhookHandler,
+        ExecuteWorkflowHandler,
+        StopExecutionHandler
       } = await import('../tools/execution/index.js');
       
-      // Route the tool call to the appropriate handler
+      // Import tag tool handlers - only the officially supported ones
+      const {
+        TagListHandler,
+        TagReadHandler,
+        TagCreateHandler,
+        TagUpdateHandler,
+        TagDeleteHandler
+      } = await import('../tools/tag/index.js');
+      
+      // Import variable tool handlers - only the officially supported ones
+      const {
+        VariableListHandler,
+        VariableCreateHandler,
+        VariableDeleteHandler
+      } = await import('../tools/variable/index.js');
+      
+      // Import project tool handlers - only the officially supported ones
+      const {
+        ProjectListHandler,
+        ProjectCreateHandler,
+        ProjectUpdateHandler,
+        ProjectDeleteHandler
+      } = await import('../tools/project/index.js');
+      
+      // Import security audit tool handler - only the officially supported one
+      const {
+        SecurityAuditGenerateHandler
+      } = await import('../tools/security-audit/index.js');
+      
+      // Import source control tool handler - only the officially supported one
+      const {
+        SourceControlPullHandler
+      } = await import('../tools/source-control/index.js');
+      
+      // Import user tool handlers
+      const {
+        UserReadHandler,
+        UserListHandler,
+        UserCreateHandler,
+        UserChangeRoleHandler,
+        UserDeleteHandler
+      } = await import('../tools/user/index.js');
+      
+      // Import credential tool handlers
+      const {
+        CredentialCreateHandler,
+        CredentialMoveHandler,
+        CredentialDeleteHandler
+      } = await import('../tools/credential/index.js');
+      
+      // Import workflow tag tool handlers
+      const {
+        ListWorkflowTagsHandler,
+        UpdateWorkflowTagsHandler
+      } = await import('../tools/workflow-tag/index.js');
+      
+      // Route the tool call to the appropriate handler - workflow operations use official n8n API naming
       if (toolName === 'list_workflows') {
         const handler = new ListWorkflowsHandler();
         result = await handler.execute(args);
-      } else if (toolName === 'get_workflow') {
-        const handler = new GetWorkflowHandler();
+      } else if (toolName === 'workflow_read') {
+        const handler = new ReadWorkflowHandler();
         result = await handler.execute(args);
       } else if (toolName === 'create_workflow') {
         const handler = new CreateWorkflowHandler();
@@ -132,6 +217,9 @@ function setupToolCallRequestHandler(server: Server): void {
         result = await handler.execute(args);
       } else if (toolName === 'activate_workflow') {
         const handler = new ActivateWorkflowHandler();
+        result = await handler.execute(args);
+      } else if (toolName === 'workflow_move') {
+        const handler = new MoveWorkflowHandler();
         result = await handler.execute(args);
       } else if (toolName === 'deactivate_workflow') {
         const handler = new DeactivateWorkflowHandler();
@@ -148,11 +236,105 @@ function setupToolCallRequestHandler(server: Server): void {
       } else if (toolName === 'run_webhook') {
         const handler = new RunWebhookHandler();
         result = await handler.execute(args);
+      } else if (toolName === 'execution_run') {
+        const handler = new ExecuteWorkflowHandler();
+        result = await handler.execute(args);
+      } else if (toolName === 'execution_stop') {
+        const handler = new StopExecutionHandler();
+        result = await handler.execute(args);
+      } 
+      // Tag tool handlers - only the officially supported ones
+      else if (toolName === 'tag_list') {
+        const handler = new TagListHandler();
+        result = await handler.execute(args);
+      } else if (toolName === 'tag_read') {
+        const handler = new TagReadHandler();
+        result = await handler.execute(args);
+      } else if (toolName === 'tag_create') {
+        const handler = new TagCreateHandler();
+        result = await handler.execute(args);
+      } else if (toolName === 'tag_update') {
+        const handler = new TagUpdateHandler();
+        result = await handler.execute(args);
+      } else if (toolName === 'tag_delete') {
+        const handler = new TagDeleteHandler();
+        result = await handler.execute(args);
+      }
+      // Variable tool handlers - only the officially supported ones
+      else if (toolName === 'variable_list') {
+        const handler = new VariableListHandler();
+        result = await handler.execute(args);
+      } else if (toolName === 'variable_create') {
+        const handler = new VariableCreateHandler();
+        result = await handler.execute(args);
+      } else if (toolName === 'variable_delete') {
+        const handler = new VariableDeleteHandler();
+        result = await handler.execute(args);
+      }
+      // Project tool handlers - only the officially supported ones
+      else if (toolName === 'project_list') {
+        const handler = new ProjectListHandler();
+        result = await handler.execute(args);
+      } else if (toolName === 'project_create') {
+        const handler = new ProjectCreateHandler();
+        result = await handler.execute(args);
+      } else if (toolName === 'project_update') {
+        const handler = new ProjectUpdateHandler();
+        result = await handler.execute(args);
+      } else if (toolName === 'project_delete') {
+        const handler = new ProjectDeleteHandler();
+        result = await handler.execute(args);
+      }
+      // Security audit tool handler - only the officially supported one
+      else if (toolName === 'security_audit_generate') {
+        const handler = new SecurityAuditGenerateHandler();
+        result = await handler.execute(args);
+      }
+      // Source control tool handler - only the officially supported one
+      else if (toolName === 'source_control_pull') {
+        const handler = new SourceControlPullHandler();
+        result = await handler.execute(args);
+      }
+      // User tool handlers
+      else if (toolName === 'user_read') {
+        const handler = new UserReadHandler();
+        result = await handler.execute(args);
+      } else if (toolName === 'user_list') {
+        const handler = new UserListHandler();
+        result = await handler.execute(args);
+      } else if (toolName === 'user_create') {
+        const handler = new UserCreateHandler();
+        result = await handler.execute(args);
+      } else if (toolName === 'user_change_role') {
+        const handler = new UserChangeRoleHandler();
+        result = await handler.execute(args);
+      } else if (toolName === 'user_delete') {
+        const handler = new UserDeleteHandler();
+        result = await handler.execute(args);
+      }
+      // Credential tool handlers
+      else if (toolName === 'credential_create') {
+        const handler = new CredentialCreateHandler();
+        result = await handler.execute(args);
+      } else if (toolName === 'credential_move') {
+        const handler = new CredentialMoveHandler();
+        result = await handler.execute(args);
+      } else if (toolName === 'credential_delete') {
+        const handler = new CredentialDeleteHandler();
+        result = await handler.execute(args);
+      }
+      // Workflow tag tool handlers
+      else if (toolName === 'workflow_tags_list') {
+        const handler = new ListWorkflowTagsHandler();
+        result = await handler.execute(args);
+      } else if (toolName === 'workflow_tags_update') {
+        const handler = new UpdateWorkflowTagsHandler();
+        result = await handler.execute(args);
       } else {
         throw new Error(`Unknown tool: ${toolName}`);
       }
 
-      // Converting to MCP SDK expected format
+      // Return the result in MCP SDK expected format
       return {
         content: result.content,
         isError: result.isError,

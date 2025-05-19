@@ -1,4 +1,4 @@
-# n8n MCP Server
+# n8n MCP Server (v1.1.0)
 
 A Model Context Protocol (MCP) server that allows AI assistants to interact with n8n workflows through natural language.
 
@@ -28,7 +28,7 @@ npm install -g n8n-mcp-server
 
 ```bash
 # Clone the repository
-git clone https://github.com/leonardsellem/n8n-mcp-server.git
+git clone https://github.com/chol369/n8n-mcp-server.git
 cd n8n-mcp-server
 
 # Install dependencies
@@ -47,7 +47,7 @@ You can also run the server using Docker:
 
 ```bash
 # Pull the image
-docker pull leonardsellem/n8n-mcp-server
+docker pull chol369/n8n-mcp-server
 
 # Run the container with your n8n API configuration
 docker run -e N8N_API_URL=http://your-n8n:5678/api/v1 \
@@ -184,6 +184,54 @@ The webhook authentication is handled automatically using the `N8N_WEBHOOK_USERN
 - `execution_list`: List executions for a workflow
 - `execution_stop`: Stop a running execution
 
+### Credential Management
+
+- `credential_create`: Create a new credential
+- `credential_delete`: Delete a credential
+- `credential_move`: Move a credential to a different owner
+
+### Project Management
+
+- `project_list`: List all projects
+- `project_create`: Create a new project
+- `project_update`: Update an existing project
+- `project_delete`: Delete a project
+
+### Tag Management
+
+- `tag_list`: List all tags
+- `tag_read`: Get details of a specific tag
+- `tag_create`: Create a new tag
+- `tag_update`: Update an existing tag
+- `tag_delete`: Delete a tag
+
+### Workflow Tag Management
+
+- `workflow_tag_list`: List all workflow tags
+- `workflow_tag_update`: Update workflow tags
+
+### User Management
+
+- `user_list`: List all users
+- `user_read`: Get details of a specific user
+- `user_create`: Create a new user
+- `user_delete`: Delete a user
+- `user_change_role`: Change a user's role
+
+### Variable Management
+
+- `variable_list`: List all variables
+- `variable_create`: Create a new variable
+- `variable_delete`: Delete a variable
+
+### Security Audit
+
+- `security_audit_generate`: Generate a security audit report
+
+### Source Control
+
+- `source_control_pull`: Pull changes from a remote repository
+
 ## Resources
 
 The server provides the following resources:
@@ -213,12 +261,31 @@ npm run dev
 npm test
 ```
 
+The test suite is written in TypeScript and uses Jest. All API client tests use a consistent mocking approach that doesn't rely on environment variables. This makes tests more reliable and easier to maintain.
+
+For more information on the test approach, see [Testing Documentation](./docs/development/testing.md).
+
 ### Linting
 
 ```bash
 npm run lint
 ```
 
+## What's New in v1.1.0
+
+This release includes significant improvements to the test suite, code quality, and development experience:
+
+- **TypeScript Migration**: All API client test files converted from JavaScript to TypeScript
+- **Enhanced Testing**: Implemented standardized mocking approach across all test files
+- **Improved Coverage**: Enhanced test coverage for all API clients
+- **Documentation Updates**: Updated documentation with TypeScript best practices
+
+See the [Release Notes](./docs/RELEASE_NOTES.md) for complete details.
+
 ## License
 
 MIT
+
+---
+
+

@@ -8,12 +8,13 @@ import { ToolCallResult } from '../../types/index.js';
 import { N8nApiError } from '../../errors/index.js';
 import {
   ListWorkflowsHandler,
-  GetWorkflowHandler,
+  ReadWorkflowHandler,
   CreateWorkflowHandler,
   UpdateWorkflowHandler,
   DeleteWorkflowHandler,
   ActivateWorkflowHandler,
   DeactivateWorkflowHandler,
+  MoveWorkflowHandler,
 } from './index.js';
 
 /**
@@ -33,8 +34,8 @@ export default async function workflowHandler(
       case 'list_workflows':
         return await new ListWorkflowsHandler().execute(args);
         
-      case 'get_workflow':
-        return await new GetWorkflowHandler().execute(args);
+      case 'read_workflow':
+        return await new ReadWorkflowHandler().execute(args);
         
       case 'create_workflow':
         return await new CreateWorkflowHandler().execute(args);

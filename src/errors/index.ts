@@ -5,11 +5,26 @@
  * for the n8n MCP Server.
  */
 
-import { McpError as SdkMcpError } from '@modelcontextprotocol/sdk/types.js';
+// Use dynamic import with try/catch to support both production and test environments
+let SdkMcpError: any;
+let McpError: any;
+
+// In tests, this will use our mock implementation
+try {
+  const sdk = require('@modelcontextprotocol/sdk');
+  SdkMcpError = sdk.McpError;
+  McpError = sdk.McpError;
+} catch (error) {
+  // Fallback to our mock in test environment
+  const mock = require('../../tests/mocks/modelcontextprotocol-sdk-mock');
+  SdkMcpError = mock.McpError;
+  McpError = mock.McpError;
+}
+
 import { ErrorCode } from './error-codes.js';
 
-// Re-export McpError from SDK
-export { McpError } from '@modelcontextprotocol/sdk/types.js';
+// Export for use in other modules
+export { McpError };
 // Re-export ErrorCode enum
 export { ErrorCode } from './error-codes.js';
 

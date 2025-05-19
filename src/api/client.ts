@@ -2,6 +2,9 @@
  * n8n API Client
  * 
  * This module provides a client for interacting with the n8n API.
+ * The client implements the official n8n API operations including:
+ * - workflow:list, workflow:read, workflow:create, workflow:update, workflow:delete, workflow:move, workflow:activate, workflow:deactivate
+ * - execution:read, execution:list, execution:delete
  */
 
 import axios, { AxiosInstance } from 'axios';
@@ -168,10 +171,10 @@ export class N8nApiClient {
         workflow.settings = {
           saveExecutionProgress: true,
           saveManualExecutions: true,
-          saveDataErrorExecution: "all",
-          saveDataSuccessExecution: "all",
+          saveDataErrorExecution: 'all',
+          saveDataSuccessExecution: 'all',
           executionTimeout: 3600,
-          timezone: "UTC"
+          timezone: 'UTC'
         };
       }
       
@@ -254,6 +257,22 @@ export class N8nApiClient {
       throw handleAxiosError(error, `Failed to deactivate workflow ${id}`);
     }
   }
+
+  /**
+   * Move workflow to a different owner
+   * 
+   * @param id Workflow ID
+   * @param newOwner ID or email of the new owner
+   * @returns Updated workflow
+   */
+  async moveWorkflow(id: string, newOwner: string): Promise<any> {
+    try {
+      const response = await this.axiosInstance.post(`/workflows/${id}/share`, { newOwner });
+      return response.data;
+    } catch (error) {
+      throw handleAxiosError(error, `Failed to move workflow ${id} to owner ${newOwner}`);
+    }
+  }
   
   /**
    * Delete an execution
@@ -267,6 +286,110 @@ export class N8nApiClient {
       return response.data;
     } catch (error) {
       throw handleAxiosError(error, `Failed to delete execution ${id}`);
+    }
+  }
+
+  /**
+   * Get all credential types
+   * 
+   * @returns Array of credential type objects
+   */
+  async getCredentialTypes(): Promise<any[]> {
+    try {
+      const response = await this.axiosInstance.get('/credential-types');
+      return response.data.data || [];
+    } catch (error) {
+      throw handleAxiosError(error, 'Failed to fetch credential types');
+    }
+  }
+
+  /**
+   * Get a specific credential type by name
+   * 
+   * @param name Credential type name
+   * @returns Credential type object
+   */
+  async getCredentialType(name: string): Promise<any> {
+    try {
+      const response = await this.axiosInstance.get(`/credential-types/${name}`);
+      return response.data;
+    } catch (error) {
+      throw handleAxiosError(error, `Failed to fetch credential type ${name}`);
+    }
+  }
+
+  /**
+   * Get all credentials
+   * 
+   * @returns Array of credential objects
+   */
+  async getCredentials(): Promise<any[]> {
+    try {
+      const response = await this.axiosInstance.get('/credentials');
+      return response.data.data || [];
+    } catch (error) {
+      throw handleAxiosError(error, 'Failed to fetch credentials');
+    }
+  }
+
+  /**
+   * Get a specific credential by ID
+   * 
+   * @param id Credential ID
+   * @returns Credential object
+   */
+  async getCredential(id: string): Promise<any> {
+    try {
+      const response = await this.axiosInstance.get(`/credentials/${id}`);
+      return response.data;
+    } catch (error) {
+      throw handleAxiosError(error, `Failed to fetch credential ${id}`);
+    }
+  }
+
+  /**
+   * Create a new credential
+   * 
+   * @param credential Credential object to create
+   * @returns Created credential
+   */
+  async createCredential(credential: Record<string, any>): Promise<any> {
+    try {
+      const response = await this.axiosInstance.post('/credentials', credential);
+      return response.data;
+    } catch (error) {
+      throw handleAxiosError(error, 'Failed to create credential');
+    }
+  }
+
+  /**
+   * Update an existing credential
+   * 
+   * @param id Credential ID
+   * @param credential Updated credential object
+   * @returns Updated credential
+   */
+  async updateCredential(id: string, credential: Record<string, any>): Promise<any> {
+    try {
+      const response = await this.axiosInstance.patch(`/credentials/${id}`, credential);
+      return response.data;
+    } catch (error) {
+      throw handleAxiosError(error, `Failed to update credential ${id}`);
+    }
+  }
+
+  /**
+   * Delete a credential
+   * 
+   * @param id Credential ID
+   * @returns Deleted credential or success message
+   */
+  async deleteCredential(id: string): Promise<any> {
+    try {
+      const response = await this.axiosInstance.delete(`/credentials/${id}`);
+      return response.data;
+    } catch (error) {
+      throw handleAxiosError(error, `Failed to delete credential ${id}`);
     }
   }
 }

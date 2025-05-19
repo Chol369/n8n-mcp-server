@@ -1,6 +1,6 @@
 # Testing
 
-This document describes the testing approach for the n8n MCP Server and provides guidelines for writing effective tests.
+This document describes the testing approach for the n8n MCP Server and provides guidelines for writing effective tests. The n8n MCP Server test suite uses TypeScript and implements a simplified, consistent mocking approach.
 
 ## Overview
 
@@ -64,6 +64,15 @@ Tests are organized into the following directories:
 - `tests/integration/`: Integration tests that test interactions between components
 - `tests/e2e/`: End-to-end tests that test the entire system
 - `tests/mocks/`: Shared test fixtures and mocks
+
+### API Client Tests
+
+API client tests are located in `tests/unit/api/` and follow a standardized structure:
+
+- Each API client has its own test file (e.g., `workflow-client.test.ts`, `credential-client.test.ts`)
+- Tests use mock objects instead of relying on environment variables
+- Error handling is tested explicitly
+- Tests are designed to work without actual API calls
 
 ### Unit Tests
 
@@ -421,17 +430,55 @@ beforeEach(() => {
 ### General Testing Guidelines
 
 1. **Write tests first**: Follow a test-driven development (TDD) approach when possible.
-2. **Test behavior, not implementation**: Focus on what a component does, not how it's implemented.
-3. **Keep tests simple**: Each test should test one behavior or aspect of functionality.
-4. **Use descriptive test names**: Test names should describe the expected behavior.
-5. **Follow the AAA pattern**: Arrange, Act, Assert (setup, execute, verify).
+2. **Test behavior, not implementation**: Focus on testing what the code does, not how it does it.
+3. **Keep tests independent**: Tests should not depend on the state or outcome of other tests.
+4. **Test one thing per test**: Each test should verify a single aspect of behavior.
+5. **Use descriptive test names**: Test names should clearly describe what is being tested.
+6. **Use TypeScript types**: Leverage TypeScript's type system to ensure type safety in tests.
+7. **Avoid environment dependencies**: Tests should not rely on specific environment variables or external services.
+8. **Use consistent mocking patterns**: Apply the same mocking approach across related test files.
 
-### Mocking Best Practices
+### Mocking
 
-1. **Mock dependencies, not the unit under test**: Only mock external dependencies, not the code you're testing.
-2. **Use the minimum viable mock**: Only mock the methods and behavior needed for the test.
-3. **Ensure mock behavior is realistic**: Mocks should behave similarly to the real implementation.
-4. **Verify interactions with mocks**: Use `expect(mock).toHaveBeenCalled()` to verify interactions.
+Jest provides powerful mocking capabilities. Use `jest.mock()` to mock modules and `jest.fn()` to create mock functions.
+
+#### Simplified Mocking Approach
+
+The project uses a simplified mocking strategy that doesn't rely on environment variables or external dependencies. This approach is implemented in the `tests/mocks/` directory:
+
+```typescript
+// Example from tests/mocks/axios-mock.ts
+import { jest } from '@jest/globals';
+
+// Create a mock axios instance
+export const createMockAxiosInstance = () => ({
+  get: jest.fn(),
+  post: jest.fn(),
+  put: jest.fn(),
+  delete: jest.fn(),
+  patch: jest.fn()
+});
+```
+
+Using this approach in tests:
+
+```typescript
+import { createMockAxiosInstance } from '../../mocks/axios-mock';
+
+describe('API Client Tests', () => {
+  let mockAxiosInstance;
+  
+  beforeEach(() => {
+    // Reset mocks
+    jest.clearAllMocks();
+    
+    // Create mock axios instance
+    mockAxiosInstance = createMockAxiosInstance();
+  });
+  
+  // Tests using mockAxiosInstance...
+});
+```
 
 ### Error Testing Best Practices
 

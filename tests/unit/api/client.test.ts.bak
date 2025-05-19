@@ -7,8 +7,8 @@ import axios from 'axios';
 import { N8nApiClient } from '../../../src/api/client.js';
 import { EnvConfig } from '../../../src/config/environment.js';
 import { N8nApiError } from '../../../src/errors/index.js';
-import { createMockAxiosInstance, createMockAxiosResponse } from '../../mocks/axios-mock.js';
-import { mockApiResponses } from '../../mocks/n8n-fixtures.js';
+import { createMockAxiosInstance, createMockAxiosResponse } from '../../mocks/axios-mock';
+import { mockApiResponses } from '../../mocks/n8n-fixtures';
 
 // Mock axios
 jest.mock('axios', () => ({

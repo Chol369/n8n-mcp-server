@@ -1,5 +1,5 @@
 /**
- * Get Workflow Tool
+ * Read Workflow Tool
  * 
  * This tool retrieves a specific workflow from n8n by ID.
  */
@@ -9,9 +9,9 @@ import { ToolCallResult, ToolDefinition } from '../../types/index.js';
 import { N8nApiError } from '../../errors/index.js';
 
 /**
- * Handler for the get_workflow tool
+ * Handler for the workflow:read tool
  */
-export class GetWorkflowHandler extends BaseWorkflowToolHandler {
+export class ReadWorkflowHandler extends BaseWorkflowToolHandler {
   /**
    * Execute the tool
    * 
@@ -34,14 +34,14 @@ export class GetWorkflowHandler extends BaseWorkflowToolHandler {
 }
 
 /**
- * Get tool definition for the get_workflow tool
+ * Get tool definition for the workflow:read tool
  * 
  * @returns Tool definition
  */
-export function getGetWorkflowToolDefinition(): ToolDefinition {
+export function getReadWorkflowToolDefinition(): ToolDefinition {
   return {
-    name: 'get_workflow',
-    description: 'Retrieve a specific workflow by ID',
+    name: 'workflow_read',
+    description: 'Read a specific workflow by ID',
     inputSchema: {
       type: 'object',
       properties: {
