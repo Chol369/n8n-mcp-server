@@ -47,9 +47,10 @@ export async function getExecutionResource(apiService: N8nApiService, executionI
       throw error;
     }
     
+    const errorMessage = error instanceof Error ? error.message : String(error);
     throw new McpError(
       ErrorCode.InternalError, 
-      `Failed to retrieve execution (ID: ${executionId}): ${error instanceof Error ? error.message : 'Unknown error'}`
+      `Failed to retrieve execution (ID: ${executionId}): ${errorMessage}`
     );
   }
 }

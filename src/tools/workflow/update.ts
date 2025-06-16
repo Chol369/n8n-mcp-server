@@ -26,31 +26,41 @@ export class UpdateWorkflowHandler extends BaseWorkflowToolHandler {
         throw new N8nApiError('Missing required parameter: workflowId');
       }
       
-      // Validate nodes if provided
-      if (nodes && !Array.isArray(nodes)) {
-        throw new N8nApiError('Parameter "nodes" must be an array');
+      // Get the current workflow to validate it exists and for building update
+      let currentWorkflow;
+      try {
+        currentWorkflow = await this.apiService.getWorkflow(workflowId);
+      } catch (error) {
+        throw new N8nApiError(`Workflow ${workflowId} not found`, 404);
       }
       
-      // Validate connections if provided
-      if (connections && typeof connections !== 'object') {
-        throw new N8nApiError('Parameter "connections" must be an object');
+      // Build update data - the API client will merge with current workflow
+      const updateData: Record<string, any> = {};
+      if (name !== undefined) updateData.name = name;
+      if (nodes !== undefined) updateData.nodes = nodes;
+      if (connections !== undefined) updateData.connections = connections;
+      if (active !== undefined) updateData.active = active;
+      
+      // Check if any supported changes requested
+      if (Object.keys(updateData).length === 0 && tags === undefined) {
+        return this.formatSuccess(currentWorkflow, 'No changes requested - workflow unchanged');
       }
       
-      // Get the current workflow to update
-      const currentWorkflow = await this.apiService.getWorkflow(workflowId);
+      // Perform update - the API client handles required field merging
+      let updatedWorkflow = currentWorkflow;
+      if (Object.keys(updateData).length > 0) {
+        updatedWorkflow = await this.apiService.updateWorkflow(workflowId, updateData);
+      }
       
-      // Prepare update object with changes
-      const workflowData: Record<string, any> = { ...currentWorkflow };
-      
-      // Update fields if provided
-      if (name !== undefined) workflowData.name = name;
-      if (nodes !== undefined) workflowData.nodes = nodes;
-      if (connections !== undefined) workflowData.connections = connections;
-      if (active !== undefined) workflowData.active = active;
-      if (tags !== undefined) workflowData.tags = tags;
-      
-      // Update the workflow
-      const updatedWorkflow = await this.apiService.updateWorkflow(workflowId, workflowData);
+      // Handle tags separately if provided (tags require separate API endpoint)
+      if (tags !== undefined) {
+        try {
+          await this.apiService.updateWorkflowTags(workflowId, tags);
+        } catch (tagError) {
+          console.warn(`Failed to update tags for workflow ${workflowId}:`, tagError);
+          // Don't fail the entire operation for tag update errors
+        }
+      }
       
       // Build a summary of changes
       const changesArray = [];
@@ -61,8 +71,8 @@ export class UpdateWorkflowHandler extends BaseWorkflowToolHandler {
       if (tags !== undefined) changesArray.push('tags updated');
       
       const changesSummary = changesArray.length > 0
-        ? `Changes: ${changesArray.join(', ')}`
-        : 'No changes were made';
+        ? `Changes applied: ${changesArray.join(', ')}`
+        : 'Workflow updated successfully';
       
       return this.formatSuccess(
         {

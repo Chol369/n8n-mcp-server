@@ -14,7 +14,6 @@ import {
   DeleteWorkflowHandler,
   ActivateWorkflowHandler,
   DeactivateWorkflowHandler,
-  MoveWorkflowHandler,
 } from './index.js';
 
 /**

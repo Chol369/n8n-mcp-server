@@ -30,7 +30,23 @@ export class UserChangeRoleHandler extends BaseUserToolHandler {
         return this.formatError(new Error('Valid role is required (owner, admin, or member)'));
       }
       
-      const roleData = { role: role as UserRole };
+      // Convert role to n8n API format (global:admin, global:member)
+      let newRoleName: string;
+      switch (role) {
+        case 'admin':
+          newRoleName = 'global:admin';
+          break;
+        case 'member':
+          newRoleName = 'global:member';
+          break;
+        case 'owner':
+          // Owner role might not be changeable via API
+          return this.formatError(new Error('Owner role cannot be changed via API'));
+        default:
+          return this.formatError(new Error('Invalid role specified'));
+      }
+      
+      const roleData = { newRoleName };
       const user = await this.userClient.changeUserRole(id, roleData);
       
       return this.formatSuccess(

@@ -8,7 +8,6 @@
  * - workflow:update
  * - workflow:delete
  * - workflow:list
- * - workflow:move
  * - workflow:activate
  * - workflow:deactivate
  */
@@ -21,7 +20,6 @@ import { getReadWorkflowToolDefinition, ReadWorkflowHandler } from './read.js';
 import { getCreateWorkflowToolDefinition, CreateWorkflowHandler } from './create.js';
 import { getUpdateWorkflowToolDefinition, UpdateWorkflowHandler } from './update.js';
 import { getDeleteWorkflowToolDefinition, DeleteWorkflowHandler } from './delete.js';
-import { getWorkflowMoveToolDefinition, MoveWorkflowHandler } from './move.js';
 import { getActivateWorkflowToolDefinition, ActivateWorkflowHandler } from './activate.js';
 import { getDeactivateWorkflowToolDefinition, DeactivateWorkflowHandler } from './deactivate.js';
 
@@ -32,7 +30,6 @@ export {
   CreateWorkflowHandler,
   UpdateWorkflowHandler,
   DeleteWorkflowHandler,
-  MoveWorkflowHandler,
   ActivateWorkflowHandler,
   DeactivateWorkflowHandler,
 };
@@ -49,7 +46,6 @@ export async function setupWorkflowTools(): Promise<ToolDefinition[]> {
     getCreateWorkflowToolDefinition(),
     getUpdateWorkflowToolDefinition(),
     getDeleteWorkflowToolDefinition(),
-    getWorkflowMoveToolDefinition(),
     getActivateWorkflowToolDefinition(),
     getDeactivateWorkflowToolDefinition(),
   ];

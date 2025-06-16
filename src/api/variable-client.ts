@@ -104,38 +104,40 @@ export class VariableClient {
    */
   async createVariable(params: VariableCreateParams): Promise<Variable> {
     try {
-      // The n8n API doesn't allow setting the type directly
-      // Let's create a sanitized copy without the 'type' field
-      const sanitizedParams = { ...params };
+      // According to n8n OpenAPI spec, variables only support 'key' and 'value' properties
+      // Properties like 'description', 'type', 'projectId' are not supported or read-only
+      const allowedParams: { key: string; value: string } = {
+        key: params.key,
+        value: params.value
+      };
       
-      // Remove the 'type' field if it exists
-      if ('type' in sanitizedParams) {
-        console.warn('Variable type is read-only in n8n API, removing from request');
-        delete sanitizedParams.type;
-      }
-      
-      const response = await this.client.post('/variables', sanitizedParams);
+      const response = await this.client.post('/variables', allowedParams);
       return response.data;
     } catch (error) {
       // Handle license limitations gracefully
       if (error && typeof error === 'object' && 'response' in error && 
           error.response && typeof error.response === 'object') {
         
-        // Handle 400 errors related to type being read-only
+        // Handle 400 errors related to validation
         if ('status' in error.response && error.response.status === 400 &&
             'data' in error.response && error.response.data &&
             typeof error.response.data === 'object' &&
             'message' in error.response.data &&
-            typeof error.response.data.message === 'string' &&
-            error.response.data.message.includes('type is read-only')) {
-          console.warn('Variable type is read-only:', error.response.data.message);
-          throw new Error('Variable type cannot be set via the API');
+            typeof error.response.data.message === 'string') {
+          console.warn('Variable creation validation error:', error.response.data.message);
+          throw new Error(`Variable creation failed due to validation: ${error.response.data.message}`);
         }
         
-        // Handle license limitations
+        // Handle 402 errors (payment required / license limitations)
+        if ('status' in error.response && error.response.status === 402) {
+          console.warn('Variable management requires enterprise license');
+          throw new Error('Variables feature requires enterprise license and is not available in the community edition');
+        }
+        
+        // Handle 403 errors (insufficient permissions)
         if ('status' in error.response && error.response.status === 403) {
-          console.warn('Variable creation limited by license or permissions');
-          throw new Error('Variable creation not available in current license or permission level');
+          console.warn('Insufficient permissions for variable management');
+          throw new Error('Insufficient permissions to manage variables. Variables may require enterprise features or specific roles.');
         }
       }
       
@@ -143,8 +145,6 @@ export class VariableClient {
       throw handleAxiosError(error, 'Failed to create variable');
     }
   }
-
-
 
   /**
    * Delete a variable by ID

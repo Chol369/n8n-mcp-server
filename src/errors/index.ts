@@ -5,23 +5,18 @@
  * for the n8n MCP Server.
  */
 
-// Use dynamic import with try/catch to support both production and test environments
-let SdkMcpError: any;
-let McpError: any;
-
-// In tests, this will use our mock implementation
-try {
-  const sdk = require('@modelcontextprotocol/sdk');
-  SdkMcpError = sdk.McpError;
-  McpError = sdk.McpError;
-} catch (error) {
-  // Fallback to our mock in test environment
-  const mock = require('../../tests/mocks/modelcontextprotocol-sdk-mock');
-  SdkMcpError = mock.McpError;
-  McpError = mock.McpError;
-}
-
 import { ErrorCode } from './error-codes.js';
+
+// Define a custom Error class for n8n API errors
+class McpError extends Error {
+  code: ErrorCode;
+
+  constructor(code: ErrorCode, message: string) {
+    super(message);
+    this.name = 'McpError';
+    this.code = code;
+  }
+}
 
 // Export for use in other modules
 export { McpError };
@@ -31,8 +26,16 @@ export { ErrorCode } from './error-codes.js';
 /**
  * n8n API Error class for handling errors from the n8n API
  */
-export class N8nApiError extends SdkMcpError {
+export class N8nApiError extends Error {
+  public code: ErrorCode;
+  public statusCode?: number;
+  public details?: unknown;
+  
   constructor(message: string, statusCode?: number, details?: unknown) {
+    // Format the error message with additional details
+    const formattedMessage = formatErrorMessage(message, statusCode, details);
+    super(formattedMessage);
+    
     // Map HTTP status codes to appropriate MCP error codes
     let errorCode = ErrorCode.InternalError;
     
@@ -46,7 +49,10 @@ export class N8nApiError extends SdkMcpError {
       }
     }
     
-    super(errorCode, formatErrorMessage(message, statusCode, details));
+    this.name = 'N8nApiError';
+    this.code = errorCode;
+    this.statusCode = statusCode;
+    this.details = details;
   }
 }
 

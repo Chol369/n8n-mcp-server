@@ -129,7 +129,6 @@ function setupToolCallRequestHandler(server: Server): void {
         CreateWorkflowHandler,
         UpdateWorkflowHandler,
         DeleteWorkflowHandler,
-        MoveWorkflowHandler,
         ActivateWorkflowHandler,
         DeactivateWorkflowHandler
       } = await import('../tools/workflow/index.js');
@@ -138,9 +137,7 @@ function setupToolCallRequestHandler(server: Server): void {
         ListExecutionsHandler,
         GetExecutionHandler,
         DeleteExecutionHandler,
-        RunWebhookHandler,
-        ExecuteWorkflowHandler,
-        StopExecutionHandler
+        RunWebhookHandler
       } = await import('../tools/execution/index.js');
       
       // Import tag tool handlers - only the officially supported ones
@@ -218,9 +215,6 @@ function setupToolCallRequestHandler(server: Server): void {
       } else if (toolName === 'activate_workflow') {
         const handler = new ActivateWorkflowHandler();
         result = await handler.execute(args);
-      } else if (toolName === 'workflow_move') {
-        const handler = new MoveWorkflowHandler();
-        result = await handler.execute(args);
       } else if (toolName === 'deactivate_workflow') {
         const handler = new DeactivateWorkflowHandler();
         result = await handler.execute(args);
@@ -235,12 +229,6 @@ function setupToolCallRequestHandler(server: Server): void {
         result = await handler.execute(args);
       } else if (toolName === 'run_webhook') {
         const handler = new RunWebhookHandler();
-        result = await handler.execute(args);
-      } else if (toolName === 'execution_run') {
-        const handler = new ExecuteWorkflowHandler();
-        result = await handler.execute(args);
-      } else if (toolName === 'execution_stop') {
-        const handler = new StopExecutionHandler();
         result = await handler.execute(args);
       } 
       // Tag tool handlers - only the officially supported ones

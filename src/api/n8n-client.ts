@@ -136,17 +136,6 @@ export class N8nApiService {
   }
 
   /**
-   * Execute a workflow by ID
-   * 
-   * @param id Workflow ID
-   * @param data Optional data to pass to the workflow
-   * @returns Execution result
-   */
-  async executeWorkflow(id: string, data?: Record<string, any>): Promise<any> {
-    return this.workflowClient.executeWorkflow(id, data);
-  }
-
-  /**
    * Create a new workflow
    * 
    * @param workflow Workflow object to create
@@ -197,17 +186,6 @@ export class N8nApiService {
     return this.workflowClient.deactivateWorkflow(id);
   }
   
-  /**
-   * Move workflow to a different owner
-   * 
-   * @param id Workflow ID
-   * @param newOwner ID or email of the new owner
-   * @returns Updated workflow
-   */
-  async moveWorkflow(id: string, newOwner: string): Promise<Workflow> {
-    return this.workflowClient.moveWorkflow(id, newOwner);
-  }
-
   /**********************************/
   /* Execution Operations           */
   /**********************************/
@@ -250,16 +228,6 @@ export class N8nApiService {
     return this.executionClient.deleteExecution(id);
   }
   
-  /**
-   * Stop a running execution
-   * 
-   * @param id Execution ID
-   * @returns Stop result
-   */
-  async stopExecution(id: string): Promise<any> {
-    return this.executionClient.stopExecution(id);
-  }
-
   /**********************************/
   /* Credential Operations          */
   /**********************************/
@@ -303,7 +271,7 @@ export class N8nApiService {
    * @returns Updated user
    */
   async changeUserRole(id: string, role: any): Promise<any> {
-    return this.userClient.changeUserRole(id, { role });
+    return this.userClient.changeUserRole(id, { newRoleName: role });
   }
   
   /**

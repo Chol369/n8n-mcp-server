@@ -52,12 +52,11 @@ export class WorkflowTagClient {
    */
   async updateWorkflowTags(workflowId: string, tagIds: string[]): Promise<Tag[]> {
     try {
-      // The API expects a specific format for the tag update request
-      const sanitizedParams = {
-        tagIds: tagIds
-      };
+      // According to n8n OpenAPI spec, the API expects an array of objects with 'id' property
+      // Format: [{ id: "tagId1" }, { id: "tagId2" }]
+      const formattedTagIds = tagIds.map(tagId => ({ id: tagId }));
       
-      const response = await this.client.put(`/workflows/${workflowId}/tags`, sanitizedParams);
+      const response = await this.client.put(`/workflows/${workflowId}/tags`, formattedTagIds);
       return response.data.data || [];
     } catch (error) {
       // Handle validation errors gracefully

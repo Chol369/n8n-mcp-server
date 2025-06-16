@@ -55,8 +55,17 @@ export abstract class BaseSecurityAuditHandler {
    * @param error Error object or message
    * @returns Formatted tool call result
    */
-  protected formatError(error: Error | string): ToolCallResult {
-    const errorMessage = typeof error === 'string' ? error : error.message;
+  protected formatError(error: Error | string | unknown): ToolCallResult {
+    let errorMessage: string;
+    
+    if (typeof error === 'string') {
+      errorMessage = error;
+    } else if (error instanceof Error) {
+      errorMessage = error.message;
+    } else {
+      errorMessage = String(error);
+    }
+    
     return {
       content: [
         {
@@ -87,14 +96,17 @@ export abstract class BaseSecurityAuditHandler {
         return this.formatError(error);
       }
       
-      return this.formatError(
-        error instanceof Error
-          ? error
-          : new McpError(
+      // Handle different error types
+      if (error instanceof Error) {
+        return this.formatError(error);
+      } else {
+        return this.formatError(
+          new McpError(
             ErrorCode.InternalError,
-            'An unexpected error occurred during tool execution'
+            `An unexpected error occurred: ${String(error)}`
           )
-      );
+        );
+      }
     }
   }
 

@@ -135,8 +135,20 @@ export class TagClient {
    */
   async updateTag(id: string, params: Partial<TagUpdateParams>): Promise<Tag> {
     try {
-      // Use PUT instead of PATCH as the n8n API doesn't support PATCH for tag updates
-      const response = await this.client.put(`/tags/${id}`, params);
+      // According to n8n OpenAPI spec, tags only support 'name' property for updates
+      // The 'color' property is not supported by the n8n API
+      const allowedParams: { name?: string } = {};
+      
+      if (params.name !== undefined) {
+        allowedParams.name = params.name;
+      }
+      
+      // If no valid parameters provided, throw an error
+      if (Object.keys(allowedParams).length === 0) {
+        throw new Error('No valid update parameters provided. Only "name" can be updated for tags.');
+      }
+      
+      const response = await this.client.put(`/tags/${id}`, allowedParams);
       return response.data;
     } catch (error) {
       // Handle method not allowed error gracefully
@@ -145,6 +157,18 @@ export class TagClient {
           'status' in error.response && error.response.status === 405) {
         console.warn(`Method not allowed for updating tag ${id}. The n8n API may not support tag updates.`);
         throw new Error(`Tag update operation not supported by the n8n API`);
+      }
+      
+      // Handle validation errors gracefully
+      if (error && typeof error === 'object' && 'response' in error && 
+          error.response && typeof error.response === 'object' &&
+          'status' in error.response && error.response.status === 400 &&
+          'data' in error.response && error.response.data &&
+          typeof error.response.data === 'object' &&
+          'message' in error.response.data &&
+          typeof error.response.data.message === 'string') {
+        console.warn(`Tag update validation error for tag ${id}:`, error.response.data.message);
+        throw new Error(`Tag update failed due to validation: ${error.response.data.message}`);
       }
       
       // Handle conflict (tag already exists) error gracefully

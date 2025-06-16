@@ -43,7 +43,7 @@ export interface CreateUserRequest {
  * Request to change a user's role
  */
 export interface ChangeUserRoleRequest {
-  role: UserRole;
+  newRoleName: string; // n8n API expects 'newRoleName' with values like 'global:admin', 'global:member'
 }
 
 /**

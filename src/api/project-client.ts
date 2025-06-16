@@ -101,7 +101,13 @@ export class ProjectClient {
    */
   async createProject(params: ProjectCreateParams): Promise<Project> {
     try {
-      const response = await this.client.post('/projects', params);
+      // According to n8n OpenAPI spec, projects only support 'name' property for creation
+      // Properties like 'description', 'status', 'metadata' are not supported
+      const allowedParams: { name: string } = {
+        name: params.name
+      };
+      
+      const response = await this.client.post('/projects', allowedParams);
       return response.data;
     } catch (error) {
       // Handle license limitation error gracefully
@@ -116,6 +122,18 @@ export class ProjectClient {
         console.warn('Project creation limited by license: ' + 
           (error.response.data.message || 'License restriction'));
         throw new Error('Project creation not available in current license tier');
+      }
+      
+      // Handle validation errors gracefully
+      if (error && typeof error === 'object' && 'response' in error && 
+          error.response && typeof error.response === 'object' &&
+          'status' in error.response && error.response.status === 400 &&
+          'data' in error.response && error.response.data &&
+          typeof error.response.data === 'object' &&
+          'message' in error.response.data &&
+          typeof error.response.data.message === 'string') {
+        console.warn('Project creation validation error:', error.response.data.message);
+        throw new Error(`Project creation failed due to validation: ${error.response.data.message}`);
       }
       
       console.error('Error creating project:', error);

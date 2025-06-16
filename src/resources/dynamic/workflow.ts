@@ -38,17 +38,21 @@ export async function getWorkflowResource(apiService: N8nApiService, workflowId:
     };
     
     return JSON.stringify(result, null, 2);
-  } catch (error) {
+  } catch (errorUnknown: unknown) {
+    // Type guard for proper error handling
+    const error: unknown = errorUnknown;
     console.error(`Error fetching workflow resource (ID: ${workflowId}):`, error);
     
-    // Handle not found errors specifically
+    // Type check for McpError
     if (error instanceof McpError && error.code === ErrorCode.NotFoundError) {
       throw error;
     }
     
+    // Convert unknown error to string for the error message
+    const errorMessage = error instanceof Error ? error.message : String(error);
     throw new McpError(
       ErrorCode.InternalError, 
-      `Failed to retrieve workflow (ID: ${workflowId}): ${error instanceof Error ? error.message : 'Unknown error'}`
+      `Failed to retrieve workflow (ID: ${workflowId}): ${errorMessage}`
     );
   }
 }

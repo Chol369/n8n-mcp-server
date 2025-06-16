@@ -136,7 +136,49 @@ export class WorkflowClient {
    */
   async updateWorkflow(id: string, workflow: Record<string, any>): Promise<Workflow> {
     try {
-      const response = await this.client.put(`/workflows/${id}`, workflow);
+      // First, get the current workflow to ensure we have all required fields
+      const currentWorkflow = await this.readWorkflow(id);
+      
+      // Filter settings to only include API-allowed properties
+      // Based on n8n API docs, these are the allowed settings properties
+      const filterSettings = (settings: any) => {
+        if (!settings || typeof settings !== 'object') return {};
+        
+        const allowedSettingsKeys = [
+          'executionOrder',
+          'saveExecutionProgress', 
+          'saveManualExecutions',
+          'saveDataErrorExecution',
+          'saveDataSuccessExecution',
+          'executionTimeout',
+          'timezone'
+        ];
+        
+        const filtered: any = {};
+        for (const key of allowedSettingsKeys) {
+          if (settings[key] !== undefined) {
+            filtered[key] = settings[key];
+          }
+        }
+        return filtered;
+      };
+      
+      // Create update object with all required fields
+      // According to n8n OpenAPI spec, name, nodes, connections, and settings are required
+      const updateData: Record<string, any> = {
+        name: workflow.name !== undefined ? workflow.name : currentWorkflow.name,
+        nodes: workflow.nodes !== undefined ? workflow.nodes : currentWorkflow.nodes,
+        connections: workflow.connections !== undefined ? workflow.connections : currentWorkflow.connections,
+        settings: workflow.settings !== undefined ? 
+          filterSettings(workflow.settings) : 
+          filterSettings(currentWorkflow.settings)
+      };
+      
+      // Add optional fields if provided
+      if (workflow.active !== undefined) updateData.active = workflow.active;
+      
+      // Send complete workflow structure to satisfy API requirements
+      const response = await this.client.put(`/workflows/${id}`, updateData);
       return response.data;
     } catch (error) {
       console.error(`Error updating workflow ${id}:`, error);
@@ -161,19 +203,21 @@ export class WorkflowClient {
   }
 
   /**
-   * Move workflow to a different owner
+   * Transfer workflow to a different project (Enterprise feature)
    * 
    * @param id Workflow ID
-   * @param newOwner ID or email of the new owner
-   * @returns Updated workflow
+   * @param destinationProjectId ID of the destination project
+   * @returns Transfer result
    */
-  async moveWorkflow(id: string, newOwner: string): Promise<Workflow> {
+  async transferWorkflowToProject(id: string, destinationProjectId: string): Promise<any> {
     try {
-      const response = await this.client.post(`/workflows/${id}/share`, { newOwner });
+      const response = await this.client.put(`/workflows/${id}/transfer`, { 
+        destinationProjectId 
+      });
       return response.data;
     } catch (error) {
-      console.error(`Error moving workflow ${id} to owner ${newOwner}:`, error);
-      throw handleAxiosError(error, `Failed to move workflow ${id} to owner ${newOwner}`);
+      console.error(`Error transferring workflow ${id} to project ${destinationProjectId}:`, error);
+      throw handleAxiosError(error, `Failed to transfer workflow ${id} to project ${destinationProjectId}`);
     }
   }
 
@@ -209,22 +253,6 @@ export class WorkflowClient {
     }
   }
 
-  /**
-   * Execute a workflow by ID
-   * 
-   * @param id Workflow ID
-   * @param data Optional data to pass to the workflow
-   * @returns Execution result
-   */
-  async executeWorkflow(id: string, data?: Record<string, any>): Promise<any> {
-    try {
-      const response = await this.client.post(`/workflows/${id}/execute`, data || {});
-      return response.data;
-    } catch (error) {
-      console.error(`Error executing workflow ${id}:`, error);
-      throw handleAxiosError(error, `Failed to execute workflow ${id}`);
-    }
-  }
 }
 
 /**

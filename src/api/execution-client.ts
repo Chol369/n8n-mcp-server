@@ -102,21 +102,6 @@ export class ExecutionClient {
     }
   }
 
-  /**
-   * Stop a running execution
-   * 
-   * @param id Execution ID
-   * @returns Stop result
-   */
-  async stopExecution(id: string): Promise<any> {
-    try {
-      const response = await this.client.post(`/executions/${id}/stop`);
-      return response.data;
-    } catch (error) {
-      console.error(`Error stopping execution ${id}:`, error);
-      throw handleAxiosError(error, `Failed to stop execution ${id}`);
-    }
-  }
 }
 
 /**
